@@ -1,0 +1,20 @@
+{
+  "name": "net.yassann.lapiscast",
+  "displayName": "LapisCast",
+  "version": "0.0.1",
+  "description": "this is LapisCast client for VRChat",
+  "gitDependencies": {},
+  "vpmDependencies": {
+    "com.vrchat.worlds": "3.3.0"
+  },
+  "author": {
+    "name": "yassann",
+    "email": "yassann456@gmail.com",
+    "url": "https://twitter.com/yassann357"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {},
+  "localPath": "",
+  "type": "library",
+  "unity": "2019.4"
+}
