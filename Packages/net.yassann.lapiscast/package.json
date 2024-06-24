@@ -4,9 +4,7 @@
   "version": "0.0.1",
   "description": "this is LapisCast client for VRChat",
   "gitDependencies": {},
-  "vpmDependencies": {
-    "com.vrchat.worlds": "3.3.0"
-  },
+  "vpmDependencies": {},
   "author": {
     "name": "yassann",
     "email": "yassann456@gmail.com",
