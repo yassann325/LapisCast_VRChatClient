@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: LapisCastCore Udon C# Program Asset
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 1a2720377a01c4b4ab12fa9aceddee1b,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: ac95d04a9714415499424c782df2ca0e,
     type: 2}
   udonAssembly: 
   assemblyError: 
