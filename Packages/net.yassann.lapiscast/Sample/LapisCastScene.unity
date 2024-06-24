@@ -224,10 +224,21 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
+      propertyPath: LocalTestMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
+    - target: {fileID: 746068031235253716, guid: 454cc0d039bc638438fabf14d44bf247,
+        type: 3}
+      propertyPath: serializedProgramAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 1a2720377a01c4b4ab12fa9aceddee1b,
+        type: 2}
     - target: {fileID: 746068031235253717, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
       propertyPath: m_RootOrder
@@ -464,7 +475,7 @@ PrefabInstance:
         type: 3}
       propertyPath: serializedProgramAsset
       value: 
-      objectReference: {fileID: 11400000, guid: c0a9c413f8d130b409f3ffa98df0081c,
+      objectReference: {fileID: 11400000, guid: 6a975e9f9bae40b4a90d61e757ac3c4d,
         type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -520,7 +531,7 @@ PrefabInstance:
         type: 3}
       propertyPath: serializedProgramAsset
       value: 
-      objectReference: {fileID: 11400000, guid: ef76a93e70beb0b4ca69dee4f6cd6c70,
+      objectReference: {fileID: 11400000, guid: 81bd7253a58d0ca43b10495f47f5de01,
         type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8894fa7e4588a5c4fab98453e558847d, type: 3}
@@ -697,6 +708,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 5624908227495817540, guid: a7282089176cb864a8742abb6bb1f7a1,
         type: 3}
+    - target: {fileID: 5624908227495817541, guid: a7282089176cb864a8742abb6bb1f7a1,
+        type: 3}
+      propertyPath: serializedProgramAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: deed336f824bd254da141c64dc9572fa,
+        type: 2}
     - target: {fileID: 5624908227495817543, guid: a7282089176cb864a8742abb6bb1f7a1,
         type: 3}
       propertyPath: m_RootOrder
