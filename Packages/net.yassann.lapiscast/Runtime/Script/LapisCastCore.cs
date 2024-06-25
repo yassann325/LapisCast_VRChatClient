@@ -24,6 +24,7 @@ namespace LapisCast{
         [UdonSynced]
         private string InstanceHash = "defaultinstance";
         private string log_prefix = "__LapisCast__";
+        private string error_prefix = "__LapisCastError__";
         private DataDictionary uploadDataDict = new DataDictionary();
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
@@ -92,6 +93,7 @@ namespace LapisCast{
             {
                 if(result.TokenType != TokenType.DataDictionary){
                     Debug.LogError("DataType not DataDictionary");
+                    Debug.Log($"{error_prefix}StringLoadSuccess. But DataType not DataDictionary");
                     return;
                 }
                 DataList _server_keylist = result.DataDictionary.GetKeys();
@@ -124,6 +126,7 @@ namespace LapisCast{
                             }
                             else{
                                 Debug.LogError("invalid data format");
+                                Debug.Log($"{error_prefix}StringLoadSuccess. But Dataformat Invaild");
                             }
                            
                         }
@@ -143,6 +146,7 @@ namespace LapisCast{
         public override void OnStringLoadError(IVRCStringDownload result)
         {
             Debug.LogError(result.Error);
+            Debug.Log($"{error_prefix}{result.Error}");
         }
 
         //Play Timeline
