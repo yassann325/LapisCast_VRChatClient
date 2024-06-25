@@ -37,7 +37,7 @@ namespace LapisCast{
         private LapisCastCore GetLapisCastCore(){
             GameObject lcc_obj = GameObject.Find("LapisCast");
             if(!lcc_obj){
-                Debug.Log("cant find LapisCast");
+                Debug.LogError("[<color=#FF00FF>LapisCast</color>] Can't find LapisCast prefab");
                 return null;
             }
             else{
