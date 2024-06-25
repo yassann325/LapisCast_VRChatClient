@@ -141,7 +141,7 @@ PrefabInstance:
     - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
       propertyPath: InstanceURL.url
-      value: https://lapisdev.yassann.net/lapiscast/public/get/4fd890c4-8f70-45b5-a220-a1b8cb35e92d
+      value: https://lapis.yassann.net/lapiscast/public/get/{instanceid-here}
       objectReference: {fileID: 0}
     - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
