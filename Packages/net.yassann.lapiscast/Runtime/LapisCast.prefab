@@ -59,7 +59,7 @@ MonoBehaviour:
   TimeLineOffset: 0.5
   LocalTestMode: 0
   InstanceURL:
-    url: https://lapis.yassann.net/lapiscast/public/get{instanceid-here}
+    url: https://lapis.yassann.net/lapiscast/public/get/{instanceid-here}
 --- !u!114 &746068031235253716
 MonoBehaviour:
   m_ObjectHideFlags: 0
