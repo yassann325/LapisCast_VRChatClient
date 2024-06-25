@@ -15,7 +15,7 @@ namespace LapisCast{
         //Client Settings
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
-        public float TimeLineOffset = 0.5f;
+        public float TimeLineOffset = 7f;
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/get/{instanceid-here}");
 

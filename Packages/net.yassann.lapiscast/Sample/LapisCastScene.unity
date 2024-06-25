@@ -131,7 +131,17 @@ PrefabInstance:
     - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
       propertyPath: LocalTestMode
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
+        type: 3}
+      propertyPath: TimeLineOffset
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
+        type: 3}
+      propertyPath: InstanceURL.url
+      value: https://lapisdev.yassann.net/lapiscast/public/get/4fd890c4-8f70-45b5-a220-a1b8cb35e92d
       objectReference: {fileID: 0}
     - target: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
         type: 3}
@@ -207,6 +217,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 454cc0d039bc638438fabf14d44bf247, type: 3}
+--- !u!1 &169762267 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 746068031235253718, guid: 454cc0d039bc638438fabf14d44bf247,
+    type: 3}
+  m_PrefabInstance: {fileID: 169762266}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &228073286
 GameObject:
   m_ObjectHideFlags: 0
@@ -495,17 +511,17 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[0].ID
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
-        type: 3}
-      propertyPath: NetworkIDs.Array.data[1].ID
       value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
-      propertyPath: NetworkIDs.Array.data[2].ID
+      propertyPath: NetworkIDs.Array.data[1].ID
       value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[2].ID
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -516,17 +532,17 @@ PrefabInstance:
         type: 3}
       propertyPath: NetworkIDs.Array.data[0].gameObject
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 843031571}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[1].gameObject
       value: 
-      objectReference: {fileID: 843031571}
+      objectReference: {fileID: 1573296402}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[2].gameObject
       value: 
-      objectReference: {fileID: 1573296402}
+      objectReference: {fileID: 169762267}
     - target: {fileID: 8464459589408506562, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: serializedProgramAsset
