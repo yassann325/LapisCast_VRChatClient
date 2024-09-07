@@ -15,12 +15,12 @@ namespace LapisCast{
         //Client Settings
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
-        public float TimeLineOffset = 0.5f;
+        public float TimeLineOffset = 7f;
         public bool LocalTestMode = false;
-        public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/get{instanceid-here}");
+        public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/get/{instanceid-here}");
 
         //Client Values
-        private VRCUrl localTestURL = new VRCUrl("http://localhost:33000/test/lapiscast");
+        private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
         [UdonSynced]
         private string InstanceHash = "defaultinstance";
         private string log_prefix = "__LapisCast__";
