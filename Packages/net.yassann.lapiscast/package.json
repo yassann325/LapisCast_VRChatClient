@@ -1,8 +1,8 @@
 {
   "name": "net.yassann.lapiscast",
   "displayName": "LapisCast",
-  "version": "0.1.0",
-  "description": "this is LapisCast client for VRChat",
+  "version": "0.2.0",
+  "description": "this is LapisCast client for VRChat\nDocument => https://lapis.yassann.net/document/docs/",
   "gitDependencies": {},
   "vpmDependencies": {},
   "author": {
