@@ -33,7 +33,7 @@ public class LapisCastDebugger : LapisCastBehaviour
 
     //Send Event
     public void SendTestEvent(){
-        SendLapisCast("DebugerEvent", "Debuger Hello!");
+        SendLapisCast("DebugerEvent", new DataToken("Debuger Hello!"), 0);
     }
 
     //Receive All Events

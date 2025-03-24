@@ -17,15 +17,25 @@ namespace LapisCast{
         public float LoadingInterval = 5f;
         public float TimeLineOffset = 7f;
         public bool LocalTestMode = false;
-        public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/get/{instanceid-here}");
+        public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
 
         //Client Values
         private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
         [UdonSynced]
-        private string InstanceHash = "defaultinstance";
+        private string EventSpaceId = "defaultinstance";
+        private string EventSpace = "VRChat@defaultinstance";
         private string log_prefix = "__LapisCast__";
         private string error_prefix = "__LapisCastError__";
+        //UploadData Cache
         private DataDictionary uploadDataDict = new DataDictionary();
+        //SendEvent Frame
+        private DataDictionary messageFrameDict = new DataDictionary(){
+            {"namespace",""},
+            {"eventspace",""},
+            {"eventkey",""},
+            {"value",""},
+            {"redundantmode",0}
+        };
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
         private double _lastAppliedTimestamp = 0;
@@ -37,18 +47,22 @@ namespace LapisCast{
 
         void Start()
         {        
+            //Setting Timer
             download_timer = LoadingInterval;
             download_timer -= StartWaiting;
+            //Init current instance EventSpaceId
             if(Networking.IsOwner(Networking.LocalPlayer, gameObject)){
-                if(InstanceHash == "defaultinstance"){
+                if(EventSpaceId == "defaultinstance"){
                     int instancehash = $"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode();
-                    InstanceHash = Mathf.Abs(instancehash).ToString();
-                    while(InstanceHash.Length < 10){
-                        InstanceHash = $"{InstanceHash}0";
+                    EventSpaceId = Mathf.Abs(instancehash).ToString();
+                    while(EventSpaceId.Length < 8){
+                        EventSpaceId = $"{EventSpaceId}0";
                     }
                 }
             }
-            Debug.Log($"InstanceHash= {InstanceHash}");
+            //Setting EventSpace
+            EventSpace = $"VRChat@{EventSpaceId}";
+            messageFrameDict.SetValue("eventspace", EventSpace);
         }
 
         private void Update() {
@@ -67,7 +81,6 @@ namespace LapisCast{
             if(upload_timer > 0.05f){
                 if(uploadDataDict.Count != 0){
                     OutputLog();
-                    uploadDataDict.Clear();
                 }
                 upload_timer = 0;
             }
@@ -96,33 +109,23 @@ namespace LapisCast{
                     Debug.Log($"{error_prefix}StringLoadSuccess. But DataType not DataDictionary");
                     return;
                 }
-                DataList _server_keylist = result.DataDictionary.GetKeys();
-                _server_keylist.Sort();
-                int ignore_colum = 0;
+
+                //Download Data Timestamps
+                //string timestamp list
+                DataList _timeline_stamps = result.DataDictionary.GetKeys();
+                _timeline_stamps.Sort();
+                int ignore_error_colum = 0;
                 //Server Timestamp Loop
-                for(int i = 0;i < _server_keylist.Count; i++){
-                    //Debug.Log(_keylist[i]);
-                    if(double.TryParse(_server_keylist[i].ToString(), out double server_timestamp)){
+                for(int i = 0;i < _timeline_stamps.Count; i++){
+                    //Compare Timestamp
+                    if(double.TryParse(_timeline_stamps[i].ToString(), out double server_timestamp)){
                         if(server_timestamp > _lastAppliedTimestamp){
                             //update lastTimestamp
                             _lastAppliedTimestamp = server_timestamp;
                             
-                            if(result.DataDictionary.TryGetValue(_server_keylist[i], out DataToken timelinedata)){
-                                 //Event Timestamp Loop
-                                DataList _keylist = timelinedata.DataDictionary.GetKeys();
-                                for(int ii = 0; ii < _keylist.Count; ii++){
-                                    if(double.TryParse(_keylist[ii].ToString(), out double timestamp)){
-                                        //if not exist dict. add
-                                        if(downloadDataDict.TryGetValue(timestamp, out DataToken exist)){
-                                            Debug.LogWarning($"LapisCast Sense ExistKey");
-                                        }
-                                        else{
-                                            DataToken value = timelinedata.DataDictionary[_keylist[ii]];
-                                            //Debug.Log($"Add Key={_keylist[ii]}");
-                                            downloadDataDict.Add(timestamp, value);
-                                        }
-                                    } 
-                                }
+                            //タイムラインからイベントリストを取り出し
+                            if(result.DataDictionary.TryGetValue(_timeline_stamps[i], out DataToken messageFrameList)){
+                                downloadDataDict.Add(server_timestamp, messageFrameList.DataList);
                             }
                             else{
                                 Debug.LogError("invalid data format");
@@ -131,11 +134,11 @@ namespace LapisCast{
                            
                         }
                         else{
-                            ignore_colum++;
+                            ignore_error_colum++;
                         }
                     }
                 }
-                //Debug.Log($"ingoreColum= {ignore_colum}");
+                //Debug.Log($"ingoreColum= {ignore_error_colum}");
             }
             else
             {
@@ -152,21 +155,30 @@ namespace LapisCast{
         //Play Timeline
         private void PlayTimeline(){
             double baseTimestamp = GetUnixTime() - Mathf.Max(TimeLineOffset, 0);
-            DataList _keylist = downloadDataDict.GetKeys();
+            DataList _timestamplist = downloadDataDict.GetKeys();
             DataList _removekeylist = new DataList();
             //Debug.Log($"TimeLine DataCount= {downloadDataDict.Count}");
             for(int i = 0;i < downloadDataDict.Count; i++){
-                if(_keylist.TryGetValue(i, out DataToken timestamp)){
-                    //Debug.Log(timestamp.TokenType); //Double
-                    if(downloadDataDict.TryGetValue(timestamp, out DataToken value)){
-                        if(timestamp.TokenType == TokenType.Double){
-                            if((double)timestamp <= baseTimestamp && (double)timestamp >= baseTimestamp - 1){
-                                //Debug.Log($"TimeLine Play at {timestamp}");
-                                //Debug.Log(value.TokenType); //Dictionary
-                                CallFlameEvents(value.DataDictionary);
+                if(_timestamplist.TryGetValue(i, out DataToken timestamp)){
+                    if(downloadDataDict.TryGetValue(timestamp, out DataToken messageFrameList)){
+                        if(timestamp.TokenType == TokenType.Double && messageFrameList.TokenType == TokenType.DataList){
+                            if((double)timestamp >= baseTimestamp - LoadingInterval){
+                                if((double)timestamp <= baseTimestamp){
+                                    //Debug.Log($"TimeLine Play at {timestamp} currentTime={GetUnixTime().ToString()}");
+                                    //Debug.Log(value.TokenType); //Dictionary
+                                    for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
+                                        CallFlameEvents((DataDictionary)messageFrameList.DataList[ii]);
+                                    }
+                                    _removekeylist.Add(timestamp);
+                                }
+                            }
+                            else{
                                 _removekeylist.Add(timestamp);
                             }
                         }
+                    }
+                    else{
+                        _removekeylist.Add(timestamp);
                     }
                 }
             }
@@ -176,26 +188,37 @@ namespace LapisCast{
             }
         }
         //Call per TimeStamp
-        private void CallFlameEvents(DataDictionary flameData){
+        private void CallFlameEvents(DataDictionary messageFrame){
             //Debug.Log("CallFlameEvents");
-            DataList spacenamelist = flameData.GetKeys();
-            for(int i = 0; i < spacenamelist.Count; i++){
-                DataDictionary spaceData = flameData[spacenamelist[i]].DataDictionary;
-                DataList keynamelist = spaceData.GetKeys();
-                for(int j = 0; j < keynamelist.Count; j++){
-                    CallBehaviours(spacenamelist[i].ToString(), keynamelist[j].ToString(), spaceData[keynamelist[j]]);
-                }
+            string spacename = "";
+            string eventspace = "";
+            string eventkey = "";
+            DataToken value = new DataToken("");
+
+            if(messageFrame.TryGetValue("ns", out DataToken _spacename)){
+                spacename = _spacename.String;
             }
+            else{return;}
+            if(messageFrame.TryGetValue("es", out DataToken _eventspace)){
+                eventspace = _eventspace.String;
+            }
+            else{return;}
+            if(messageFrame.TryGetValue("ky", out DataToken _eventkey)){
+                eventkey = _eventkey.String;
+            }
+            else{return;}
+            if(messageFrame.TryGetValue("vl", out DataToken _value)){
+                value = _value;
+            }
+            else{return;}
+            
+            CallBehaviours(spacename, eventspace, eventkey, value);
         }
         //Call per Namespace
-        private void CallBehaviours(string spacename, string keyname, DataToken value){
+        private void CallBehaviours(string spacename,string eventspace, string keyname, DataToken value){
             bool sameinstance = false;
-            string[] spacename_split = spacename.Split('@');
-            if(spacename_split.Length > 1){   
-                spacename = spacename_split[0];
-                if(spacename_split[1] == InstanceHash){
-                    sameinstance = true;      
-                }            
+            if(EventSpace == eventspace){   
+                sameinstance = true;          
             }
             for(int i = 0; i < lapisCastBehaviours.Length; i++){
                 lapisCastBehaviours[i]._triggerLapisEvent(spacename, keyname, value, sameinstance);
@@ -203,22 +226,33 @@ namespace LapisCast{
         }
 
         //Upload Instance Data
-        public void AddEvent(string spacename, string keyname, DataToken value){
-            spacename = $"{spacename}@{InstanceHash}";
-            if(uploadDataDict.TryGetValue(spacename, out DataToken name_space)){
-                if(name_space.TokenType != TokenType.DataDictionary){
-                    //ネームスペース以外の構造は削除
-                    uploadDataDict.Remove(name_space);
+        public void AddEvent(string spacename, string keyname, DataToken value, int redundantmode){
+            //set MessageFrame
+            messageFrameDict.SetValue("namespace", spacename);
+            messageFrameDict.SetValue("eventkey", keyname);
+            messageFrameDict.SetValue("value", value);
+            messageFrameDict.SetValue("redundantmode", Mathf.Max(redundantmode, 0));
+
+            string timestamp = GetUnixTime().ToString();
+            string framekey = $"{spacename}/{keyname}";
+            
+            //Add eventmessage to uploadDataDict
+            if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){
+                if(timelineColumn.TokenType != TokenType.DataDictionary){
+                    //if Invalid Delete it
+                    uploadDataDict.Remove(timestamp);
                 }
                 else{
-                    name_space.DataDictionary.SetValue(keyname, value);
+                    timelineColumn.DataDictionary.SetValue(framekey, messageFrameDict.DeepClone());
                 }
             }
             else{
-                uploadDataDict.SetValue(spacename, new DataDictionary());
-                ((DataDictionary)uploadDataDict[spacename]).SetValue(keyname, value);
+                uploadDataDict.SetValue(timestamp, new DataDictionary());
+                ((DataDictionary)uploadDataDict[timestamp]).SetValue(framekey, messageFrameDict.DeepClone());
             }
         }
+
+        //Output DebugLog Text
         private void OutputLog(){
             if(uploadDataDict.Count == 0){
                 return;
@@ -227,6 +261,7 @@ namespace LapisCast{
             {
                 //string _json = result.String;
                 Debug.Log($"{log_prefix}{result.String}");
+                uploadDataDict.Clear();
             }
             else
             {
@@ -253,8 +288,8 @@ namespace LapisCast{
             DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             // 現在時刻とUnixエポックの差を求める
             TimeSpan elapsedTime = now - unixEpoch;
-            // 秒単位の経過時間をdouble型で取得（小数点以下の精度も含む）
-            return elapsedTime.TotalSeconds;
+            // 秒単位の経過時間をdouble型で取得（小数点以下3桁まで）
+            return Math.Round(elapsedTime.TotalSeconds, 3);
         }
     }
 }
