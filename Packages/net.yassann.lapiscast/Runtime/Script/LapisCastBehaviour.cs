@@ -47,17 +47,10 @@ namespace LapisCast{
 
 
         public void SendLapisCast(string keyname, DataToken value){
-            lapisCastCore.AddEvent(script_spacename, keyname, value, 0);
+            lapisCastCore.AddEvent(script_spacename, keyname, value);
         }
         public void SendLapisCast(string spanename, string keyname, DataToken value){
-            lapisCastCore.AddEvent(spanename, keyname, value, 0);
-        }
-
-        public void SendLapisCast(string keyname, DataToken value, int redundantmode){
-            lapisCastCore.AddEvent(script_spacename, keyname, value, redundantmode);
-        }
-        public void SendLapisCast(string spanename, string keyname, DataToken value, int redundantmode){
-            lapisCastCore.AddEvent(spanename, keyname, value, redundantmode);
+            lapisCastCore.AddEvent(spanename, keyname, value);
         }
 
 

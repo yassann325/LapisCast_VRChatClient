@@ -33,8 +33,7 @@ namespace LapisCast{
             {"namespace",""},
             {"eventspace",""},
             {"eventkey",""},
-            {"value",""},
-            {"redundantmode",0}
+            {"value",""}
         };
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
@@ -226,29 +225,27 @@ namespace LapisCast{
         }
 
         //Upload Instance Data
-        public void AddEvent(string spacename, string keyname, DataToken value, int redundantmode){
+        public void AddEvent(string spacename, string keyname, DataToken value){
             //set MessageFrame
             messageFrameDict.SetValue("namespace", spacename);
             messageFrameDict.SetValue("eventkey", keyname);
             messageFrameDict.SetValue("value", value);
-            messageFrameDict.SetValue("redundantmode", Mathf.Max(redundantmode, 0));
 
             string timestamp = GetUnixTime().ToString();
-            string framekey = $"{spacename}/{keyname}";
             
             //Add eventmessage to uploadDataDict
             if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){
-                if(timelineColumn.TokenType != TokenType.DataDictionary){
+                if(timelineColumn.TokenType != TokenType.DataList){
                     //if Invalid Delete it
                     uploadDataDict.Remove(timestamp);
                 }
                 else{
-                    timelineColumn.DataDictionary.SetValue(framekey, messageFrameDict.DeepClone());
+                    timelineColumn.DataList.Add(messageFrameDict.DeepClone());
                 }
             }
             else{
-                uploadDataDict.SetValue(timestamp, new DataDictionary());
-                ((DataDictionary)uploadDataDict[timestamp]).SetValue(framekey, messageFrameDict.DeepClone());
+                uploadDataDict.SetValue(timestamp, new DataList());
+                ((DataList)uploadDataDict[timestamp]).Add(messageFrameDict.DeepClone());
             }
         }
 
