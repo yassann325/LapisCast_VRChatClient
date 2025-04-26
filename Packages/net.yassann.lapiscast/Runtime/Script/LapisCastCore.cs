@@ -16,6 +16,7 @@ namespace LapisCast{
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
         public float TimeLineOffset = 7f;
+        public float MaxEventDelay = 1f;
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
 
@@ -33,8 +34,7 @@ namespace LapisCast{
             {"namespace",""},
             {"eventspace",""},
             {"eventkey",""},
-            {"value",""},
-            {"redundantmode",0}
+            {"value",""}
         };
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
@@ -43,6 +43,9 @@ namespace LapisCast{
         //Timer
         private float download_timer = 0;
         private float upload_timer = 0;
+
+        //TimelineClock
+        private LapisCastTimelineClock timelineClock;
 
 
         void Start()
@@ -63,6 +66,8 @@ namespace LapisCast{
             //Setting EventSpace
             EventSpace = $"VRChat@{EventSpaceId}";
             messageFrameDict.SetValue("eventspace", EventSpace);
+            //Get TimelineClock
+            timelineClock = gameObject.GetComponent<LapisCastTimelineClock>();
         }
 
         private void Update() {
@@ -110,9 +115,14 @@ namespace LapisCast{
                     return;
                 }
 
+                DataDictionary proo_data = result.DataDictionary["prop"].DataDictionary;
+                DataDictionary tl_data = result.DataDictionary["tlmain"].DataDictionary;
+
+                timelineClock.AdjustTimelineClock(proo_data["servtime"].Double, 0);
+
                 //Download Data Timestamps
                 //string timestamp list
-                DataList _timeline_stamps = result.DataDictionary.GetKeys();
+                DataList _timeline_stamps = tl_data.GetKeys();
                 _timeline_stamps.Sort();
                 int ignore_error_colum = 0;
                 //Server Timestamp Loop
@@ -124,7 +134,7 @@ namespace LapisCast{
                             _lastAppliedTimestamp = server_timestamp;
                             
                             //タイムラインからイベントリストを取り出し
-                            if(result.DataDictionary.TryGetValue(_timeline_stamps[i], out DataToken messageFrameList)){
+                            if(tl_data.TryGetValue(_timeline_stamps[i], out DataToken messageFrameList)){
                                 downloadDataDict.Add(server_timestamp, messageFrameList.DataList);
                             }
                             else{
@@ -154,7 +164,7 @@ namespace LapisCast{
 
         //Play Timeline
         private void PlayTimeline(){
-            double baseTimestamp = GetUnixTime() - Mathf.Max(TimeLineOffset, 0);
+            double baseTimestamp = timelineClock.GetTimestamp() - TimeLineOffset;
             DataList _timestamplist = downloadDataDict.GetKeys();
             DataList _removekeylist = new DataList();
             //Debug.Log($"TimeLine DataCount= {downloadDataDict.Count}");
@@ -162,9 +172,9 @@ namespace LapisCast{
                 if(_timestamplist.TryGetValue(i, out DataToken timestamp)){
                     if(downloadDataDict.TryGetValue(timestamp, out DataToken messageFrameList)){
                         if(timestamp.TokenType == TokenType.Double && messageFrameList.TokenType == TokenType.DataList){
-                            if((double)timestamp >= baseTimestamp - LoadingInterval){
+                            if(baseTimestamp - MaxEventDelay <= (double)timestamp){
                                 if((double)timestamp <= baseTimestamp){
-                                    //Debug.Log($"TimeLine Play at {timestamp} currentTime={GetUnixTime().ToString()}");
+                                    //Debug.Log($"TimeLine Play at {timestamp} currentTime={timelineClock.GetTimestamp().ToString()}");
                                     //Debug.Log(value.TokenType); //Dictionary
                                     for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
                                         CallFlameEvents((DataDictionary)messageFrameList.DataList[ii]);
@@ -226,29 +236,27 @@ namespace LapisCast{
         }
 
         //Upload Instance Data
-        public void AddEvent(string spacename, string keyname, DataToken value, int redundantmode){
+        public void AddEvent(string spacename, string keyname, DataToken value){
             //set MessageFrame
             messageFrameDict.SetValue("namespace", spacename);
             messageFrameDict.SetValue("eventkey", keyname);
             messageFrameDict.SetValue("value", value);
-            messageFrameDict.SetValue("redundantmode", Mathf.Max(redundantmode, 0));
 
-            string timestamp = GetUnixTime().ToString();
-            string framekey = $"{spacename}/{keyname}";
+            string timestamp = timelineClock.GetTimestamp().ToString();
             
             //Add eventmessage to uploadDataDict
             if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){
-                if(timelineColumn.TokenType != TokenType.DataDictionary){
+                if(timelineColumn.TokenType != TokenType.DataList){
                     //if Invalid Delete it
                     uploadDataDict.Remove(timestamp);
                 }
                 else{
-                    timelineColumn.DataDictionary.SetValue(framekey, messageFrameDict.DeepClone());
+                    timelineColumn.DataList.Add(messageFrameDict.DeepClone());
                 }
             }
             else{
-                uploadDataDict.SetValue(timestamp, new DataDictionary());
-                ((DataDictionary)uploadDataDict[timestamp]).SetValue(framekey, messageFrameDict.DeepClone());
+                uploadDataDict.SetValue(timestamp, new DataList());
+                ((DataList)uploadDataDict[timestamp]).Add(messageFrameDict.DeepClone());
             }
         }
 
@@ -279,17 +287,6 @@ namespace LapisCast{
 
             lapisCastBehaviours = newList;
             return this;
-        }
-
-        //getTimestamp
-        private double GetUnixTime(){
-            DateTime now = DateTime.UtcNow;
-            // Unixエポック（1970年1月1日）を定義
-            DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            // 現在時刻とUnixエポックの差を求める
-            TimeSpan elapsedTime = now - unixEpoch;
-            // 秒単位の経過時間をdouble型で取得（小数点以下3桁まで）
-            return Math.Round(elapsedTime.TotalSeconds, 3);
         }
     }
 }
