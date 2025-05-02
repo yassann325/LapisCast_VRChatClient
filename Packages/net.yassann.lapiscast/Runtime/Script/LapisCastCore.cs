@@ -114,15 +114,28 @@ namespace LapisCast{
                     Debug.Log($"{error_prefix}StringLoadSuccess. But DataType not DataDictionary");
                     return;
                 }
+                //Debug.Log("OnStringLoadSuccess");
 
-                DataDictionary proo_data = result.DataDictionary["prop"].DataDictionary;
-                DataDictionary tl_data = result.DataDictionary["tlmain"].DataDictionary;
-
-                timelineClock.AdjustTimelineClock(proo_data["servtime"].Double, 0);
+                if(result.DataDictionary.TryGetValue("prop", TokenType.DataDictionary, out DataToken propValue)){
+                    if(propValue.DataDictionary.TryGetValue("servtime", TokenType.Double, out DataToken servtime)){
+                        timelineClock.AdjustTimelineClock(servtime.Double, 0);
+                    }
+                }
+                else{
+                    Debug.LogError("Prop Data not find.");
+                    return;
+                }
+                if(result.DataDictionary.TryGetValue("tlmain", TokenType.DataDictionary, out DataToken tlValue)){
+                    
+                }
+                else{
+                    Debug.LogError("Timeline Data not find.");
+                    return;
+                }
 
                 //Download Data Timestamps
                 //string timestamp list
-                DataList _timeline_stamps = tl_data.GetKeys();
+                DataList _timeline_stamps = tlValue.DataDictionary.GetKeys();
                 _timeline_stamps.Sort();
                 int ignore_error_colum = 0;
                 //Server Timestamp Loop
@@ -134,7 +147,7 @@ namespace LapisCast{
                             _lastAppliedTimestamp = server_timestamp;
                             
                             //タイムラインからイベントリストを取り出し
-                            if(tl_data.TryGetValue(_timeline_stamps[i], out DataToken messageFrameList)){
+                            if(tlValue.DataDictionary.TryGetValue(_timeline_stamps[i], out DataToken messageFrameList)){
                                 downloadDataDict.Add(server_timestamp, messageFrameList.DataList);
                             }
                             else{
@@ -177,7 +190,12 @@ namespace LapisCast{
                                     //Debug.Log($"TimeLine Play at {timestamp} currentTime={timelineClock.GetTimestamp().ToString()}");
                                     //Debug.Log(value.TokenType); //Dictionary
                                     for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
-                                        CallFlameEvents((DataDictionary)messageFrameList.DataList[ii]);
+                                        if(messageFrameList.DataList.TryGetValue(ii, TokenType.DataDictionary, out DataToken flameEvents)){
+                                            CallFlameEvents(flameEvents.DataDictionary);
+                                        }
+                                        else{
+                                            Debug.LogError("Before Event Call. FlameEvents not found.");
+                                        }
                                     }
                                     _removekeylist.Add(timestamp);
                                 }
@@ -226,6 +244,7 @@ namespace LapisCast{
         }
         //Call per Namespace
         private void CallBehaviours(string spacename,string eventspace, string keyname, DataToken value){
+            //Debug.Log("CallBehaviours");
             bool sameinstance = false;
             if(EventSpace == eventspace){   
                 sameinstance = true;          
