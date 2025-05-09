@@ -8,33 +8,41 @@ using VRC.SDK3.Data;
 namespace LapisCast{
     public class LapisCastBehaviour : UdonSharpBehaviour
     {
-        private string script_spacename = "every";
+        private string _script_spacename = "default";
         private bool _subscribed = false;
-        private LapisCastCore lapisCastCore;
+        private LapisCastCore _lapisCastCore;
 
+        // LapisCastBehaviourInit
         public void LapisCastBehaviourInit(){
             if(_subscribed){return;}
             _subscribed = true;
-            lapisCastCore = GetLapisCastCore();
-            if(lapisCastCore){
-                lapisCastCore._subscribe_behaviour(this);
+            _lapisCastCore = _serchLapisCastCore();
+            if(_lapisCastCore){
+                _lapisCastCore._subscribe_behaviour(this);
             }
         }
         public void LapisCastBehaviourInit(string spacename){
             SetSpaceName(spacename);
             if(_subscribed){return;}
             _subscribed = true;
-            lapisCastCore = GetLapisCastCore();
-            if(lapisCastCore){
-                lapisCastCore._subscribe_behaviour(this);
+            _lapisCastCore = _serchLapisCastCore();
+            if(_lapisCastCore){
+                _lapisCastCore._subscribe_behaviour(this);
             }
         }
+
+        // SpaceName
         public void SetSpaceName(string spacename){
-            if(spacename != null){
-                script_spacename = spacename;
+            if(spacename != null && spacename.Length != 0){
+                _script_spacename = spacename;
             }
         }
-        private LapisCastCore GetLapisCastCore(){
+        public string GetSpaceName(){
+            return _script_spacename;
+        }
+
+        //LapisCastCore
+        private LapisCastCore _serchLapisCastCore(){
             GameObject lcc_obj = GameObject.Find("LapisCast");
             if(!lcc_obj){
                 Debug.LogError("[<color=#FF00FF>LapisCast</color>] Can't find LapisCast prefab");
@@ -44,19 +52,23 @@ namespace LapisCast{
                  return lcc_obj.GetComponent<LapisCastCore>();
             }
         }
+        public LapisCastCore GetLapisCastCore(){
+            return _lapisCastCore;
+        }
 
-
+        // SendMessage
         public void SendLapisCast(string keyname, DataToken value){
-            lapisCastCore.AddEvent(script_spacename, keyname, value);
+            _lapisCastCore.AddEvent(_script_spacename, keyname, value);
         }
         public void SendLapisCast(string spanename, string keyname, DataToken value){
-            lapisCastCore.AddEvent(spanename, keyname, value);
+            _lapisCastCore.AddEvent(spanename, keyname, value);
         }
 
 
+        // Exec Event Self
         public void _triggerLapisEvent(string spanename, string keyname, DataToken value, bool sameinstance){
             OnLapisCastAllEvent(spanename, keyname, value, sameinstance);
-            if(spanename == script_spacename){
+            if(spanename == _script_spacename){
                 OnLapisCastEvent(spanename, keyname, value, sameinstance);
             }      
         }
