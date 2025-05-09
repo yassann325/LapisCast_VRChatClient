@@ -19,6 +19,7 @@ namespace LapisCast{
         public float MaxEventDelay = 1f;
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
+        public bool EnableLapisCast = true;
 
         //Client Values
         private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
@@ -96,6 +97,7 @@ namespace LapisCast{
 
         //Get Instance Data
         private void StringDownload(){
+            if(!EnableLapisCast) return;
             if(LocalTestMode){
                 VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
             }else{
@@ -256,6 +258,7 @@ namespace LapisCast{
 
         //Upload Instance Data
         public void AddEvent(string spacename, string keyname, DataToken value){
+            if(!EnableLapisCast) return;
             //set MessageFrame
             messageFrameDict.SetValue("namespace", spacename);
             messageFrameDict.SetValue("eventkey", keyname);
