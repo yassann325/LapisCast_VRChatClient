@@ -277,7 +277,7 @@ namespace LapisCast{
             messageFrameDict.SetValue("eventkey", keyname);
             messageFrameDict.SetValue("value", value);
 
-            string timestamp = timelineClock.GetTimestamp().ToString();
+            string timestamp = timelineClock.GetUnixTimestamp().ToString();
             
             //Add eventmessage to uploadDataDict
             if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){

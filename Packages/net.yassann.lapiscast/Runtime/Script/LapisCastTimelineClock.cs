@@ -5,6 +5,8 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.SDK3.Data;
+using VRC.SDK3.Rendering;
+using VRC.Udon.Common.Interfaces;
 
 namespace LapisCast{
     public class LapisCastTimelineClock : UdonSharpBehaviour
@@ -12,6 +14,16 @@ namespace LapisCast{
         private double targetAdjustUnixOffset = 0;
         private double adjustmentUnixOffset = 0;
         private DataList unixOffsetList = new DataList();
+        
+        [Tooltip("配信の時間情報を使用する際のオフセットです。")]
+        public float StreamTimelineOffset = 0;
+
+        public bool UseStreamTimestamp = false;
+        public int BitSize = 16;
+        public bool InvertTexture_Y = false;
+        private RenderTexture sourceTexture = null;
+        private double streamUnixDiffTime = 0;
+
 
         void Start()
         {
@@ -72,8 +84,87 @@ namespace LapisCast{
             return current + Math.Sign(difference) * maxDelta;
         }
 
+        //======================================================//
+        // Stream Clock
+        // Request Read Stream Data
+        public void AdjustStreamTimelineClock(RenderTexture rt){
+            sourceTexture = rt;
+            if(rt){
+                VRCAsyncGPUReadback.Request(rt, 0, (IUdonEventReceiver)this);
+            }
+            else{
+                Debug.LogError("SourceTexture None.");
+            }
+        }
+
+        public double GetStreamTimestamp(){
+            return GetUnixTimestamp() - streamUnixDiffTime;
+        }
+
+        public RenderTexture GetStreamTimestampSourceTexture(){
+            return sourceTexture;
+        }
+
+        private int GetColorsIndex(int x, int y, int width, int height, bool invert_y)
+        {
+            if(invert_y){
+                int flippedY = (height - 1) - y;
+                return flippedY * width + x;
+            }
+            else{
+                return y * width + x;
+            }
+        }
+
+        public override void OnAsyncGpuReadbackComplete(VRCAsyncGPUReadbackRequest request)
+        {
+            if (request.hasError)
+            {
+                Debug.LogError("GPU readback error!");
+                return;
+            }
+            else
+            {
+                var px = new Color32[sourceTexture.width * sourceTexture.height];
+                bool result = request.TryGetData(px);
+                if(!result){
+                    return;
+                }
+                // Debug.Log("GPU readback success: " + result);
+                // Debug.Log("GPU readback size: " + SourceTexture.width + " x " + SourceTexture.height);
+
+                Color32[] dpx = new Color32[64];
+                for(int i = 0; i < 64; i++){
+                    int pxIndex = GetColorsIndex(BitSize * i + BitSize / 2, BitSize / 2, sourceTexture.width, sourceTexture.height, InvertTexture_Y);
+                    dpx[i] = px[pxIndex];
+                }
+
+                double streamTime = DecordStreamData(dpx);
+                if(Math.Abs(GetUnixTimestamp() - streamTime) > 60){ return; }
+                streamUnixDiffTime = GetUnixTimestamp() - (streamTime + StreamTimelineOffset);
+            }
+        }
+
+        private double DecordStreamData(Color32[] px){
+            long value = 0;
+            for(int i = 0; i < 64; i++){
+                if(px[i].b > 128){
+                    value |= (1L << (63 - i));
+                }
+                // Debug.Log(i + " | " + pxIndex);
+            }
+            return (double)value / 1000;
+        }
+
+        //======================================================//
+        // return preferential Timestamp
         public double GetTimestamp(){
-            return GetUnixTimestamp();
+            if(UseStreamTimestamp){
+                return GetStreamTimestamp();
+            }
+            else{
+                return GetUnixTimestamp();
+            }
         }
     }
 }
