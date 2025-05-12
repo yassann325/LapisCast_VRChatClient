@@ -9,7 +9,7 @@ using VRC.SDK3.StringLoading;
 using VRC.Udon.Common.Interfaces;
 
 namespace LapisCast{
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class LapisCastCore : UdonSharpBehaviour
     {
         //Client Settings
@@ -63,9 +63,8 @@ namespace LapisCast{
                         EventSpaceId = $"{EventSpaceId}0";
                     }
                 }
+                RequestSerialization();
             }
-            //Setting EventSpace
-            EventSpace = $"VRChat@{EventSpaceId}";
             messageFrameDict.SetValue("eventspace", EventSpace);
             //Get TimelineClock
             timelineClock = gameObject.GetComponent<LapisCastTimelineClock>();
@@ -93,6 +92,20 @@ namespace LapisCast{
             else{
                 upload_timer += Time.deltaTime;
             }
+        }
+
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            if(Networking.IsOwner(Networking.LocalPlayer, gameObject)){
+                RequestSerialization();
+            }
+        }
+
+        public override void OnDeserialization()
+        {
+            //Setting EventSpace
+            EventSpace = $"VRChat@{EventSpaceId}";
+            messageFrameDict.SetValue("eventspace", EventSpace);
         }
 
         //Get Instance Data
