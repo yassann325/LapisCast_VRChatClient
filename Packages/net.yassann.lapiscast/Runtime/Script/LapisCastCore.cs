@@ -39,6 +39,7 @@ namespace LapisCast{
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
         private double _lastAppliedTimestamp = 0;
+        private DataList httpRequestTimestamps = new DataList();
 
         //Timer
         private float download_timer = 0;
@@ -110,6 +111,7 @@ namespace LapisCast{
         //Get Instance Data
         private void StringDownload(){
             if(!EnableLapisCast) return;
+            httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
             if(LocalTestMode){
                 VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
             }else{
@@ -132,7 +134,9 @@ namespace LapisCast{
 
                 if(result.DataDictionary.TryGetValue("prop", TokenType.DataDictionary, out DataToken propValue)){
                     if(propValue.DataDictionary.TryGetValue("servtime", TokenType.Double, out DataToken servtime)){
-                        timelineClock.AdjustTimelineClock(servtime.Double, 0);
+                        double httpAccessTime = timelineClock.GetLocalHostUnixTime() - httpRequestTimestamps[0].Double;
+                        httpRequestTimestamps.RemoveAt(0);
+                        timelineClock.AdjustTimelineClock(servtime.Double, -httpAccessTime / 2);
                     }
                 }
                 else{
@@ -187,6 +191,7 @@ namespace LapisCast{
         {
             Debug.LogError(result.Error);
             Debug.Log($"{error_prefix}{result.Error}");
+            httpRequestTimestamps.RemoveAt(0);
         }
 
         //Play Timeline
