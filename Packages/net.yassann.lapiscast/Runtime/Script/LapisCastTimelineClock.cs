@@ -14,7 +14,7 @@ namespace LapisCast{
 
         void Start()
         {
-            initUnixOffset = GetHostUnixTime();
+            initUnixOffset = GetLocalHostUnixTime();
         }
 
         void Update()
@@ -23,7 +23,7 @@ namespace LapisCast{
         }
 
         //getHostTimestamp
-        public double GetHostUnixTime(){
+        public double GetLocalHostUnixTime(){
             DateTime now = DateTime.UtcNow;
             // Unixエポック（1970年1月1日）を定義
             DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -53,7 +53,7 @@ namespace LapisCast{
         }
 
         public double GetTimestamp(){
-            return GetUnixOffset() + Time.time;
+            return GetLocalHostUnixTime() + Time.time;
         }
     }
 }
