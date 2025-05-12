@@ -15,7 +15,6 @@ namespace LapisCast{
         //Client Settings
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
-        public float TimeLineOffset = 7f;
         public float MaxEventDelay = 1f;
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
@@ -192,7 +191,7 @@ namespace LapisCast{
 
         //Play Timeline
         private void PlayTimeline(){
-            double baseTimestamp = timelineClock.GetTimestamp() - TimeLineOffset;
+            double baseTimestamp = timelineClock.GetTimestamp();
             DataList _timestamplist = downloadDataDict.GetKeys();
             DataList _removekeylist = new DataList();
             //Debug.Log($"TimeLine DataCount= {downloadDataDict.Count}");

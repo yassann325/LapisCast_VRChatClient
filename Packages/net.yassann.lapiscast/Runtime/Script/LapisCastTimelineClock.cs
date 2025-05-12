@@ -9,12 +9,14 @@ using VRC.SDK3.Rendering;
 using VRC.Udon.Common.Interfaces;
 
 namespace LapisCast{
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class LapisCastTimelineClock : UdonSharpBehaviour
     {
         private double targetAdjustUnixOffset = 0;
         private double adjustmentUnixOffset = 0;
         private DataList unixOffsetList = new DataList();
-        
+        [Tooltip("LapisCast単独使用の際のオフセットです。")]
+        public float StandaloneTimelineOffset = -7f;
         [Tooltip("配信の時間情報を使用する際のオフセットです。")]
         public float StreamTimelineOffset = 0;
 
@@ -163,7 +165,7 @@ namespace LapisCast{
                 return GetStreamTimestamp();
             }
             else{
-                return GetUnixTimestamp();
+                return GetUnixTimestamp() + StandaloneTimelineOffset;
             }
         }
     }
