@@ -19,6 +19,7 @@ namespace LapisCast{
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
         public bool EnableLapisCast = true;
+        public bool DisableLogOnNonWindows = true;
 
         //Client Values
         private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
@@ -276,6 +277,11 @@ namespace LapisCast{
         //Upload Instance Data
         public void AddEvent(string spacename, string keyname, DataToken value){
             if(!EnableLapisCast) return;
+
+            #if !(UNITY_EDITOR || UNITY_STANDALONE_WIN)
+                if (DisableLogOnNonWindows) return;
+            #endif
+
             //set MessageFrame
             messageFrameDict.SetValue("namespace", spacename);
             messageFrameDict.SetValue("eventkey", keyname);
