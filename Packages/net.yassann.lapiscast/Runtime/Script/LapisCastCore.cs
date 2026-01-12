@@ -51,6 +51,7 @@ namespace LapisCast{
 
         //TimelineClock
         private LapisCastTimelineClock timelineClock;
+        private VRCUrl timeAdjustmentUrl = new VRCUrl("https://lapis.yassann.net/lapiscast/public/00000000-0000-0000-0000-000000000000");
 
 
         void Start()
@@ -72,6 +73,12 @@ namespace LapisCast{
 
             //Get TimelineClock
             timelineClock = gameObject.GetComponent<LapisCastTimelineClock>();
+
+            // If Empty Instance URL Access for time correction
+            if(InstanceURL.ToString().Length == 0){
+                httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
+                VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
+            }
         }
 
         private void Update() {
