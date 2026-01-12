@@ -25,11 +25,13 @@ namespace LapisCast{
         public bool InvertTexture_Y = false;
         private RenderTexture sourceTexture = null;
         private double streamUnixDiffTime = 0;
+        private double gamePlayTimeOffset = 0;
 
 
         void Start()
         {
             adjustmentUnixOffset = GetLocalHostUnixTime();
+            gamePlayTimeOffset = Time.time;
         }
 
         void Update()
@@ -55,9 +57,14 @@ namespace LapisCast{
             return adjustmentUnixOffset;
         }
 
+        public double GetVRChatInstaneActiveTime()
+        {
+            return Time.time - gamePlayTimeOffset;
+        }
+
         // Adjust SceneStartTime use ServerBased Timestamp
         public void AdjustTimelineClock(double serverTime, double offsetTime){
-            unixOffsetList.Add(new DataToken(serverTime + offsetTime - Time.time));
+            unixOffsetList.Add(new DataToken(serverTime + offsetTime - GetVRChatInstaneActiveTime()));
             if(unixOffsetList.Count > 10){
                 unixOffsetList.RemoveAt(0);
             }
@@ -69,13 +76,14 @@ namespace LapisCast{
             aveTime /= unixOffsetList.Count;
 
             targetAdjustUnixOffset = aveTime;
+            // If there is a large deviation, it is forced to be applied.
             if(Math.Abs(targetAdjustUnixOffset - adjustmentUnixOffset) > 3){
                 adjustmentUnixOffset = targetAdjustUnixOffset;
             }
         }
 
         public double GetUnixTimestamp(){
-            return GetUnixSceneStartTime() + Time.time;
+            return GetUnixSceneStartTime() + GetVRChatInstaneActiveTime();
         }
 
         private double MoveTowardsDouble(double current, double target, double maxDelta)
