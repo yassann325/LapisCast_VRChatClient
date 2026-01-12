@@ -23,9 +23,12 @@ namespace LapisCast{
 
         //Client Values
         private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
-        [UdonSynced]
-        private string EventSpaceId = "defaultinstance";
-        private string EventSpace = "VRChat@defaultinstance";
+        [UdonSynced, FieldChangeCallback(nameof(EventSpace))] private string eventSpace = "VRChat@defaultinstance";
+        public string EventSpace
+        {
+            get => eventSpace;
+            set { eventSpace = value; OnEventSpaceChanged(); }
+        }
         private string log_prefix = "__LapisCast__";
         private string error_prefix = "__LapisCastError__";
         //UploadData Cache
@@ -55,18 +58,18 @@ namespace LapisCast{
             //Setting Timer
             download_timer = LoadingInterval;
             download_timer -= StartWaiting;
+
             //Init current instance EventSpaceId
             if(Networking.IsOwner(Networking.LocalPlayer, gameObject)){
-                if(EventSpaceId == "defaultinstance"){
-                    int instancehash = $"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode();
-                    EventSpaceId = Mathf.Abs(instancehash).ToString();
-                    while(EventSpaceId.Length < 8){
-                        EventSpaceId = $"{EventSpaceId}0";
-                    }
+                int instancehash = $"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode();
+                string EventSpaceId = Mathf.Abs(instancehash).ToString();
+                while(EventSpaceId.Length < 8){
+                    EventSpaceId = $"{EventSpaceId}0";
                 }
+                EventSpace = $"VRChat@{EventSpaceId}";
                 RequestSerialization();
             }
-            messageFrameDict.SetValue("eventspace", EventSpace);
+
             //Get TimelineClock
             timelineClock = gameObject.GetComponent<LapisCastTimelineClock>();
         }
@@ -102,10 +105,9 @@ namespace LapisCast{
             }
         }
 
-        public override void OnDeserialization()
+        private void OnEventSpaceChanged()
         {
             //Setting EventSpace
-            EventSpace = $"VRChat@{EventSpaceId}";
             messageFrameDict.SetValue("eventspace", EventSpace);
         }
 
