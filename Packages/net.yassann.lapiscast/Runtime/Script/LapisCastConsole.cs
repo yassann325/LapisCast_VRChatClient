@@ -26,7 +26,6 @@ public class LapisCastConsole : LapisCastBehaviour
     public VRCUrl lapiscastUrl = new VRCUrl("");
 
     [Space(20)]
-    [UdonSynced]
     private string _currentPanel = "log";
     [SerializeField]
     private CanvasGroup logPanel;
@@ -51,10 +50,10 @@ public class LapisCastConsole : LapisCastBehaviour
     private void Update()
     {
         ApplyNewURL();
-        SetPanelActive(_currentPanel);
     }
 
 
+    // del require
     public void ClearConsoleText(){
         if(consoleText){
             consoleText.text = "";
@@ -130,14 +129,12 @@ public class LapisCastConsole : LapisCastBehaviour
     }
 
     public void SetLogPanel(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         _currentPanel = "log";
-        RequestSerialization();
+        SetPanelActive(_currentPanel);
     }
 
     public void SetDebugPanel(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         _currentPanel = "debug";
-        RequestSerialization();
+        SetPanelActive(_currentPanel);
     }
 }
