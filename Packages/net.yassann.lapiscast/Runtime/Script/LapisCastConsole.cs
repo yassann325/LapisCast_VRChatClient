@@ -27,6 +27,12 @@ public class LapisCastConsole : LapisCastBehaviour
 
     [Space(20)]
     private string _currentPanel = "log";
+    [UdonSynced, FieldChangeCallback(nameof(LapisCastEnable))]
+    private bool _lapisCastEnable = true;
+    [UdonSynced, FieldChangeCallback(nameof(LapisCastLocalTestMode))]
+    private bool _lapisCastLocalTestMode = false;
+    [SerializeField]
+    private Toggle lapisCastEnableCheck;
     [SerializeField]
     private CanvasGroup logPanel;
     [SerializeField]
@@ -36,12 +42,31 @@ public class LapisCastConsole : LapisCastBehaviour
     private Toggle logPanelCheck;
     [SerializeField]
     private Toggle debugPanelCheck;
+    [SerializeField]
+    private Toggle lapisCastLocalTestModeCheck;
+
+
+    public bool LapisCastEnable
+    {
+        get => _lapisCastEnable;
+        set { _lapisCastEnable = value; lapisCastEnableCheck.isOn = value; LapisCast.EnableLapisCast = value; }
+    }
+    public bool LapisCastLocalTestMode
+    {
+        get => _lapisCastLocalTestMode;
+        set { _lapisCastLocalTestMode = value; lapisCastLocalTestModeCheck.isOn = value; LapisCast.LocalTestMode = value; }
+    }
 
     void Start()
     {
         LapisCastBehaviourInit();
         ClearConsoleText();
         lapiscastUrl = LapisCast.InstanceURL;
+        if (Networking.IsOwner(Networking.LocalPlayer, gameObject))
+        {
+            LapisCastEnable = LapisCast.EnableLapisCast;
+            LapisCastLocalTestMode = LapisCast.LocalTestMode;
+        }
 
         ApplyNewURL();
         SetPanelActive(_currentPanel);
@@ -136,5 +161,19 @@ public class LapisCastConsole : LapisCastBehaviour
     public void SetDebugPanel(){
         _currentPanel = "debug";
         SetPanelActive(_currentPanel);
+    }
+
+    public void ToggleLapisCastEnable()
+    {
+        Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        LapisCastEnable = !LapisCastEnable;
+        RequestSerialization();
+    }
+
+    public void ToggleLapisCastLocalTestMode()
+    {
+        Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        LapisCastLocalTestMode = !LapisCastLocalTestMode;
+        RequestSerialization();
     }
 }
