@@ -11,8 +11,7 @@ using UnityEngine.UI;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastDebugger : LapisCastBehaviour
 {
-    [SerializeField, UdonSynced]
-    public bool sendDebugEvent = true;
+    public bool sendDebugEvent = false;
     [SerializeField]
     private Toggle debugModeToggle;
 
@@ -21,7 +20,6 @@ public class LapisCastDebugger : LapisCastBehaviour
     private VRCUrlInputField EventNameInputField;
     [SerializeField]
     private Text EventNameText;
-    [UdonSynced]
     public string EventName = "debugEvent";
 
     [Space(20)]
@@ -29,7 +27,6 @@ public class LapisCastDebugger : LapisCastBehaviour
     private VRCUrlInputField ValueInputField;
     [SerializeField]
     private Text ValueText;
-    [UdonSynced]
     public string Value = "testValue";
 
     [Space(20)]
@@ -37,11 +34,9 @@ public class LapisCastDebugger : LapisCastBehaviour
     private VRCUrlInputField SpaceNameInputField;
     [SerializeField]
     private Text SpaceNameText;
-    [UdonSynced]
     public string SpacetName = "debugSpace";
 
     [Space(20)]
-    [UdonSynced]
     private float eventSendIntervalTime = 1;
     private float timer = 0;
 
@@ -57,16 +52,14 @@ public class LapisCastDebugger : LapisCastBehaviour
     }
 
     private void Update() {
-        if(sendDebugEvent && Networking.IsMaster){
-            if(timer > eventSendIntervalTime){
-                timer = 0;
-                SendTestEvent();
-            }
-            timer += Time.deltaTime;
+        if(sendDebugEvent && timer > eventSendIntervalTime){
+            timer = 0;
+            SendTestEvent();
         }
+        timer += Time.deltaTime;
     }
 
-    public override void OnDeserialization()
+    public void OnDebugParamChanged()
     {
         debugModeToggle.isOn = sendDebugEvent;
 
@@ -76,13 +69,6 @@ public class LapisCastDebugger : LapisCastBehaviour
         SetSpaceName(SpacetName);
     }
 
-
-    public override void OnPlayerJoined(VRCPlayerApi player)
-    {
-        if(Networking.IsOwner(gameObject)){
-            RequestSerialization();
-        }
-    }
 
     // Set SendDebugEvent State
     public void ToggleSendDebugEvent(){
@@ -95,38 +81,30 @@ public class LapisCastDebugger : LapisCastBehaviour
         SetSendDebugEventState(false);
     }
     public void SetSendDebugEventState(bool state){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         sendDebugEvent = state;
-        RequestSerialization();
+        OnDebugParamChanged();
     }
 
     //Send Event
     public void SendTestEvent(){
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "doTestEvent");
-    }
-
-    public void doTestEvent(){
         SendLapisCast(EventName, new DataToken(Value));
     }
 
     public void OnEventNameChanged(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         EventName = EventNameInputField.GetUrl().ToString();
-        RequestSerialization();
+        OnDebugParamChanged();
     }
 
     public void OnValueChanged(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         Value = ValueInputField.GetUrl().ToString();
-        RequestSerialization();
+        OnDebugParamChanged();
     }
 
     public void OnSpaceNameChanged(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
         SpacetName = SpaceNameInputField.GetUrl().ToString();
         if(SpacetName == ""){
             SpacetName = "debugSpace";
         }
-        RequestSerialization();
+        OnDebugParamChanged();
     }
 }
