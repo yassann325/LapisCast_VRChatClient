@@ -7,6 +7,7 @@ using VRC.SDK3.Components;
 using LapisCast;
 using VRC.SDK3.Data;
 using UnityEngine.UI;
+using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastConsole : LapisCastBehaviour
@@ -18,7 +19,8 @@ public class LapisCastConsole : LapisCastBehaviour
     [SerializeField]
     private Text UrlText;
     [SerializeField]
-    private Text consoleText;
+    private TMP_Text consoleText;
+    private DataList consoleLogList = new DataList();
 
     [UdonSynced]
     public VRCUrl lapiscastUrl = new VRCUrl("");
@@ -61,8 +63,24 @@ public class LapisCastConsole : LapisCastBehaviour
 
     public override void OnLapisCastAllEvent(string spanename, string keyname, DataToken value, bool sameinstance)
     {
-        if(consoleText && consoleText.text.Length < 5000000){
-            consoleText.text += $"{spanename} | {keyname}/{value}\n";
+        string logLine = $"{spanename} | {keyname}/{value}";
+        if (logLine.Length > 50)
+        {
+            logLine = logLine.Substring(0, 50);
+        }
+        consoleLogList.Add(logLine+"\n");
+        
+        if (consoleText)
+        {       
+            if(consoleLogList.Count >= 16){
+                consoleLogList.RemoveAt(0);
+            }
+            string logText = "";
+            for (int i = consoleLogList.Count-1; i >= 0; i--)
+            {
+                logText += consoleLogList[i].String;
+            }
+            consoleText.text = logText;
         }
     }
 
