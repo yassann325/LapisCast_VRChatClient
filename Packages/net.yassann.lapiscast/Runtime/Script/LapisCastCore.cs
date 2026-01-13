@@ -121,12 +121,13 @@ namespace LapisCast{
         //Get Instance Data
         private void StringDownload(){
             if(!EnableLapisCast) return;
-            httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
             if(LocalTestMode){
                 VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
             }else{
+                if (InstanceURL.ToString().Length == 0){ return; }
                 VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
             }
+            httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
