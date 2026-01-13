@@ -4458,8 +4458,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1907260612326932277}
-  LapisCast: {fileID: 746068031235253715, guid: 454cc0d039bc638438fabf14d44bf247,
-    type: 3}
+  LapisCast: {fileID: 0}
   urlInputField: {fileID: 1921066595189717108}
   UrlText: {fileID: 8568524631429226441}
   consoleText: {fileID: 7366841432546423276}
