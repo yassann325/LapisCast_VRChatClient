@@ -343,6 +343,12 @@ namespace LapisCast{
             lapisCastBehaviours = newList;
             return this;
         }
+
+        // Get LapisCast Clock
+        public LapisCastTimelineClock GetLapisCastClock()
+        {
+            return timelineClock;
+        }
     }
 }
 

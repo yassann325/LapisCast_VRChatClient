@@ -79,6 +79,12 @@ namespace LapisCast{
         public virtual void OnLapisCastAllEvent(string spanename, string keyname, DataToken value, bool sameinstance){
 
         }
+
+        // Get LapisCast Unix Time
+        public double GetLapisCastTimestamp()
+        {
+            return _lapisCastCore.GetLapisCastClock().GetTimestamp();
+        }
     }
 }
 
