@@ -30,7 +30,7 @@ namespace LapisCast{
 
         void Start()
         {
-            adjustmentUnixOffset = GetLocalHostUnixTime();
+            adjustmentUnixOffset = targetAdjustUnixOffset = GetLocalHostUnixTime();
             gamePlayTimeOffset = Time.time;
         }
 
