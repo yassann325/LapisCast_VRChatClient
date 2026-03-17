@@ -94,7 +94,8 @@ namespace LapisCast{
 
             PlayTimeline();
 
-            if(upload_timer > 0.05f){
+            // Export Evnt Log 40fps
+            if(upload_timer > 0.025f){
                 if(uploadDataDict.Count != 0){
                     OutputLog();
                 }
