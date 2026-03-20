@@ -213,27 +213,25 @@ namespace LapisCast{
             DataList _removekeylist = new DataList();
             //Debug.Log($"TimeLine DataCount= {downloadDataDict.Count}");
             for(int i = 0;i < downloadDataDict.Count; i++){
-                if(_timestamplist.TryGetValue(i, out DataToken timestamp)){
-                    if(downloadDataDict.TryGetValue(timestamp, out DataToken messageFrameList)){
-                        if(timestamp.TokenType == TokenType.Double && messageFrameList.TokenType == TokenType.DataList){
-                            if(baseTimestamp - MaxEventDelay <= (double)timestamp){
-                                if((double)timestamp <= baseTimestamp){
-                                    //Debug.Log($"TimeLine Play at {timestamp} currentTime={timelineClock.GetTimestamp().ToString()}");
-                                    //Debug.Log(value.TokenType); //Dictionary
-                                    for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
-                                        if(messageFrameList.DataList.TryGetValue(ii, TokenType.DataDictionary, out DataToken flameEvents)){
-                                            CallFlameEvents(flameEvents.DataDictionary);
-                                        }
-                                        else{
-                                            Debug.LogError("Before Event Call. FlameEvents not found.");
-                                        }
+                if(_timestamplist.TryGetValue(i, TokenType.Double, out DataToken timestamp)){
+                    if(downloadDataDict.TryGetValue(timestamp, TokenType.DataList, out DataToken messageFrameList)){
+                        if(baseTimestamp - MaxEventDelay <= timestamp.Double){
+                            if(timestamp.Double <= baseTimestamp){
+                                //Debug.Log($"TimeLine Play at {timestamp} currentTime={timelineClock.GetTimestamp().ToString()}");
+                                //Debug.Log(value.TokenType); //Dictionary
+                                for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
+                                    if(messageFrameList.DataList.TryGetValue(ii, TokenType.DataDictionary, out DataToken flameEvents)){
+                                        CallFlameEvents(timestamp.Double, flameEvents.DataDictionary);
                                     }
-                                    _removekeylist.Add(timestamp);
+                                    else{
+                                        Debug.LogError("Before Event Call. FlameEvents not found.");
+                                    }
                                 }
-                            }
-                            else{
                                 _removekeylist.Add(timestamp);
                             }
+                        }
+                        else{
+                            _removekeylist.Add(timestamp);
                         }
                     }
                     else{
@@ -247,7 +245,7 @@ namespace LapisCast{
             }
         }
         //Call per TimeStamp
-        private void CallFlameEvents(DataDictionary messageFrame){
+        private void CallFlameEvents(double timestamp, DataDictionary messageFrame){
             //Debug.Log("CallFlameEvents");
             string spacename = "";
             string eventspace = "";
@@ -271,17 +269,17 @@ namespace LapisCast{
             }
             else{return;}
             
-            CallBehaviours(spacename, eventspace, eventkey, value);
+            CallBehaviours(timestamp, spacename, eventspace, eventkey, value);
         }
         //Call per Namespace
-        private void CallBehaviours(string spacename,string eventspace, string keyname, DataToken value){
+        private void CallBehaviours(double timestamp, string spacename,string eventspace, string keyname, DataToken value){
             //Debug.Log("CallBehaviours");
             bool sameinstance = false;
             if(EventSpace == eventspace){   
                 sameinstance = true;          
             }
             for(int i = 0; i < lapisCastBehaviours.Length; i++){
-                lapisCastBehaviours[i]._triggerLapisEvent(spacename, keyname, value, sameinstance);
+                lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance);
             }
         }
 

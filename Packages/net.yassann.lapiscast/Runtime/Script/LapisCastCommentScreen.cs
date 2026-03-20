@@ -28,7 +28,7 @@ public class LapisCastCommentScreen : LapisCastBehaviour
         CommentScreenSpaceName = GetSpaceName();
     }
 
-    public override void OnLapisCastEvent(string spanename, string keyname, DataToken value, bool sameinstance)
+    public override void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance)
     {
         CreateNewCommnet(value.String);
     }

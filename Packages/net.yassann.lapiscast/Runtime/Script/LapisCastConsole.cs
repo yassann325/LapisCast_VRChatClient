@@ -85,7 +85,7 @@ public class LapisCastConsole : LapisCastBehaviour
         }
     }
 
-    public override void OnLapisCastAllEvent(string spanename, string keyname, DataToken value, bool sameinstance)
+    public override void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance)
     {
         string logLine = $"{spanename} | {keyname}/{value}";
         if (logLine.Length > 50)
