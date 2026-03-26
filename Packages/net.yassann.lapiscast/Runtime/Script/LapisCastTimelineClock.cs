@@ -12,31 +12,37 @@ namespace LapisCast{
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class LapisCastTimelineClock : UdonSharpBehaviour
     {
-        private double targetAdjustUnixOffset = 0;
-        private double adjustmentUnixOffset = 0;
-        private DataList unixOffsetList = new DataList();
         [Tooltip("LapisCast単独使用の際のオフセットです。")]
         public float StandaloneTimelineOffset = -7f;
         [Tooltip("配信の時間情報を使用する際のオフセットです。")]
         public float StreamTimelineOffset = 0;
-
         public bool UseStreamTimestamp = false;
-        public int BitSize = 16;
-        public bool InvertTexture_Y = false;
-        private RenderTexture sourceTexture = null;
-        private double streamUnixDiffTime = 0;
+
+        // Adjust Target Timestamp
+        private double targetAdjustSceneStartTime = 0;
+        private double targetSceneStreamStartTime = 0;
+        // Current Adjusting Timecursor
+        private double adjustedSceneStartTime = 0;
+        private double sceneStreamStartTime = 0;
+
+        // Adjust Step Average List
+        private DataList unixOffsetList = new DataList();
+        private DataList streamTimeOffsetList = new DataList();
+
+        // World Init Time in Unity Client
         private double gamePlayTimeOffset = 0;
 
 
         void Start()
         {
-            adjustmentUnixOffset = targetAdjustUnixOffset = GetLocalHostUnixTime();
+            adjustedSceneStartTime = targetAdjustSceneStartTime = GetLocalHostUnixTime();
             gamePlayTimeOffset = Time.time;
         }
 
         void Update()
         {
-            adjustmentUnixOffset = MoveTowardsDouble(adjustmentUnixOffset, targetAdjustUnixOffset, Time.deltaTime*0.5f);
+            adjustedSceneStartTime = MoveTowardsDouble(adjustedSceneStartTime, targetAdjustSceneStartTime, Time.deltaTime*0.5f);
+            sceneStreamStartTime = MoveTowardsDouble(sceneStreamStartTime, targetSceneStreamStartTime, Time.deltaTime*0.5f);
         }
 
         //getHostTimestamp
@@ -54,7 +60,7 @@ namespace LapisCast{
         // LapisCast Clock
         // return UnixTime when HostBased SceneStartTime or ServerBased SceneStartTime
         public double GetUnixSceneStartTime(){
-            return adjustmentUnixOffset;
+            return adjustedSceneStartTime;
         }
 
         public double GetVRChatInstaneActiveTime()
@@ -75,10 +81,10 @@ namespace LapisCast{
             }
             aveTime /= unixOffsetList.Count;
 
-            targetAdjustUnixOffset = aveTime;
+            targetAdjustSceneStartTime = aveTime;
             // If there is a large deviation, it is forced to be applied.
-            if(Math.Abs(targetAdjustUnixOffset - adjustmentUnixOffset) > 3){
-                adjustmentUnixOffset = targetAdjustUnixOffset;
+            if(Math.Abs(targetAdjustSceneStartTime - adjustedSceneStartTime) > 3){
+                adjustedSceneStartTime = targetAdjustSceneStartTime;
             }
         }
 
@@ -96,81 +102,41 @@ namespace LapisCast{
 
         //======================================================//
         // Stream Clock
-        // Request Read Stream Data
-        public void AdjustStreamTimelineClock(RenderTexture rt){
-            sourceTexture = rt;
-            if(rt){
-                VRCAsyncGPUReadback.Request(rt, 0, (IUdonEventReceiver)this);
+        public void AdjustStreamTimelineClock(double streamTime, bool forceApply){
+            if (forceApply)
+            {
+                streamTimeOffsetList.Clear();
             }
-            else{
-                Debug.LogError("SourceTexture None.");
+
+            // 現在時刻とStreamTimeの違いを計測
+            streamTimeOffsetList.Add(new DataToken(streamTime - GetLocalHostUnixTime()));
+            if(streamTimeOffsetList.Count > 10){
+                streamTimeOffsetList.RemoveAt(0);
+            }
+
+            double aveTime = 0;
+            for(int i = 0; i < streamTimeOffsetList.Count; i++){
+                aveTime += streamTimeOffsetList[i].Double;
+            }
+            aveTime /= streamTimeOffsetList.Count;
+
+            targetSceneStreamStartTime = aveTime;
+            // If there is a large deviation, it is forced to be applied.
+            if(Math.Abs(targetSceneStreamStartTime - sceneStreamStartTime) > 3){
+                sceneStreamStartTime = targetSceneStreamStartTime;
             }
         }
 
         public double GetStreamTimestamp(){
-            return GetUnixTimestamp() - streamUnixDiffTime;
+            return sceneStreamStartTime + GetLocalHostUnixTime();
         }
 
-        public RenderTexture GetStreamTimestampSourceTexture(){
-            return sourceTexture;
-        }
-
-        private int GetColorsIndex(int x, int y, int width, int height, bool invert_y)
-        {
-            if(invert_y){
-                int flippedY = (height - 1) - y;
-                return flippedY * width + x;
-            }
-            else{
-                return y * width + x;
-            }
-        }
-
-        public override void OnAsyncGpuReadbackComplete(VRCAsyncGPUReadbackRequest request)
-        {
-            if (request.hasError)
-            {
-                Debug.LogError("GPU readback error!");
-                return;
-            }
-            else
-            {
-                var px = new Color32[sourceTexture.width * sourceTexture.height];
-                bool result = request.TryGetData(px);
-                if(!result){
-                    return;
-                }
-                // Debug.Log("GPU readback success: " + result);
-                // Debug.Log("GPU readback size: " + SourceTexture.width + " x " + SourceTexture.height);
-
-                Color32[] dpx = new Color32[64];
-                for(int i = 0; i < 64; i++){
-                    int pxIndex = GetColorsIndex(BitSize * i + BitSize / 2, BitSize / 2, sourceTexture.width, sourceTexture.height, InvertTexture_Y);
-                    dpx[i] = px[pxIndex];
-                }
-
-                double streamTime = DecordStreamData(dpx);
-                if(Math.Abs(GetUnixTimestamp() - streamTime) > 60){ return; }
-                streamUnixDiffTime = GetUnixTimestamp() - (streamTime + StreamTimelineOffset);
-            }
-        }
-
-        private double DecordStreamData(Color32[] px){
-            long value = 0;
-            for(int i = 0; i < 64; i++){
-                if(px[i].b > 128){
-                    value |= (1L << (63 - i));
-                }
-                // Debug.Log(i + " | " + pxIndex);
-            }
-            return (double)value / 1000;
-        }
 
         //======================================================//
         // return preferential Timestamp
         public double GetTimestamp(){
             if(UseStreamTimestamp){
-                return GetStreamTimestamp();
+                return GetStreamTimestamp() + StreamTimelineOffset;
             }
             else{
                 return GetUnixTimestamp() + StandaloneTimelineOffset;
