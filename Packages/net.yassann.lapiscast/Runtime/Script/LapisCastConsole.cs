@@ -12,8 +12,8 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastConsole : LapisCastBehaviour
 {
-    [SerializeField]
     private LapisCastCore LapisCast;
+    
     [SerializeField]
     private VRCUrlInputField urlInputField;
     [SerializeField]
@@ -75,6 +75,8 @@ public class LapisCastConsole : LapisCastBehaviour
     void Start()
     {
         LapisCastBehaviourInit();
+        LapisCast = GetLapisCastCore();
+
         ClearConsoleText();
         lapiscastUrl = LapisCast.InstanceURL;
         if (Networking.IsOwner(Networking.LocalPlayer, gameObject))
