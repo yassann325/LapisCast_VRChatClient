@@ -33,17 +33,32 @@ public class LapisCastConsole : LapisCastBehaviour
     private bool _lapisCastLocalTestMode = false;
     [SerializeField]
     private Toggle lapisCastEnableCheck;
+
+    [Header("Menu Panels")]
     [SerializeField]
     private CanvasGroup logPanel;
     [SerializeField]
     private CanvasGroup debugPanel;
+    [SerializeField]
+    private CanvasGroup settingPanel;
 
+    [Header("Menu Toggles")]
     [SerializeField]
     private Toggle logPanelCheck;
     [SerializeField]
     private Toggle debugPanelCheck;
     [SerializeField]
+    private Toggle settingPanelCheck;
+
+    [Header("Debug Menu Things")]
+    [SerializeField]
     private Toggle lapisCastLocalTestModeCheck;
+
+    [Header("Debug Menu Things")]
+    [SerializeField]
+    private Toggle LapisCastEventExecToggle;
+    [SerializeField]
+    private Toggle LapisCastEventOutputToggle;
 
 
     public bool LapisCastEnable
@@ -70,6 +85,9 @@ public class LapisCastConsole : LapisCastBehaviour
 
         ApplyNewURL();
         SetPanelActive(_currentPanel);
+
+        LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
+        LapisCastEventOutputToggle.isOn = LapisCast.EnableLapisCastEventOutput;
     }
 
     private void Update()
@@ -140,6 +158,7 @@ public class LapisCastConsole : LapisCastBehaviour
     public void SetPanelActive(string panelName){
         bool logPanelState = false;
         bool debugPanelState = false;
+        bool settingPanelState = false;
         
         if(panelName == "log"){
             logPanelState = true;
@@ -147,10 +166,16 @@ public class LapisCastConsole : LapisCastBehaviour
         else if(panelName == "debug"){
             debugPanelState = true;
         }
+        else if (panelName == "setting")
+        {
+            settingPanelState = true;
+        }
         logPanelCheck.isOn = logPanelState;
         debugPanelCheck.isOn = debugPanelState;
+        settingPanelCheck.isOn = settingPanelState;
         applyCanvasGroupSetting(logPanel, logPanelState);
         applyCanvasGroupSetting(debugPanel, debugPanelState);
+        applyCanvasGroupSetting(settingPanel, settingPanelState);
     }
 
     public void SetLogPanel(){
@@ -160,6 +185,11 @@ public class LapisCastConsole : LapisCastBehaviour
 
     public void SetDebugPanel(){
         _currentPanel = "debug";
+        SetPanelActive(_currentPanel);
+    }
+
+    public void SetSettingPanel(){
+        _currentPanel = "setting";
         SetPanelActive(_currentPanel);
     }
 
@@ -175,5 +205,15 @@ public class LapisCastConsole : LapisCastBehaviour
         Networking.SetOwner(Networking.LocalPlayer, gameObject);
         LapisCastLocalTestMode = !LapisCastLocalTestMode;
         RequestSerialization();
+    }
+
+    public void ToggleLapisCastEventExec()
+    {
+        LapisCast.EnableLapisCastEventExec = LapisCastEventExecToggle.isOn;
+    }
+
+    public void ToggleLapisCastEventOutput()
+    {
+        LapisCast.EnableLapisCastEventOutput = LapisCastEventOutputToggle.isOn;
     }
 }

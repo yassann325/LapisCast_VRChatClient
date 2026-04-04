@@ -19,6 +19,8 @@ namespace LapisCast{
         public bool LocalTestMode = false;
         public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
         public bool EnableLapisCast = true;
+        public bool EnableLapisCastEventExec = true;
+        public bool EnableLapisCastEventOutput = true;
         public bool DisableLogOnNonWindows = true;
 
         //Client Values
@@ -121,7 +123,7 @@ namespace LapisCast{
 
         //Get Instance Data
         private void StringDownload(){
-            if(!EnableLapisCast) return;
+            if(!(EnableLapisCastEventExec && EnableLapisCast)) return;
             if(LocalTestMode){
                 VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
             }else{
@@ -285,7 +287,7 @@ namespace LapisCast{
 
         //Upload Instance Data
         public void AddEvent(string spacename, string keyname, DataToken value){
-            if(!EnableLapisCast) return;
+            if(!(EnableLapisCastEventOutput && EnableLapisCast)) return;
 
             #if !(UNITY_EDITOR || UNITY_STANDALONE_WIN)
                 if (DisableLogOnNonWindows) return;
@@ -316,6 +318,11 @@ namespace LapisCast{
 
         //Output DebugLog Text
         private void OutputLog(){
+            if(!(EnableLapisCastEventOutput && EnableLapisCast))
+            {
+                uploadDataDict.Clear();
+                return;
+            }
             if(uploadDataDict.Count == 0){
                 return;
             }
