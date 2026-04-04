@@ -17,8 +17,11 @@ namespace LapisCast{
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
         public float MaxEventDelay = 1f;
+        [SerializeField, UdonSynced]
         public bool LocalTestMode = false;
-        public VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
+        [SerializeField, UdonSynced]
+        private VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
+        [SerializeField, UdonSynced]
         public bool EnableLapisCast = true;
         public bool EnableLapisCastEventExec = true;
         public bool EnableLapisCastEventOutput = true;
@@ -369,6 +372,31 @@ namespace LapisCast{
             lapisCastBehaviours = newList;
             return this;
         }
+
+        // LapisCast Param Setting
+        public void SetLocalTestMode(bool state)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            LocalTestMode = state;
+            RequestSerialization();
+        }
+        public bool GetLocalTestMode() { return LocalTestMode; }
+
+        public void SetInstanceUrl(VRCUrl url)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            InstanceURL = url;
+            RequestSerialization();
+        }
+        public VRCUrl GetInstanceUrl() { return InstanceURL; }
+
+        public void SetLapisCastEnable(bool state)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            EnableLapisCast = state;
+            RequestSerialization();
+        }
+        public bool GetLapisCastEnable() { return EnableLapisCast; }
 
         
         //======================================================//

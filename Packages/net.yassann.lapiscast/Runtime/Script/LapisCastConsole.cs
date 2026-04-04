@@ -13,7 +13,7 @@ using TMPro;
 public class LapisCastConsole : LapisCastBehaviour
 {
     private LapisCastCore LapisCast;
-    
+
     [SerializeField]
     private VRCUrlInputField urlInputField;
     [SerializeField]
@@ -22,15 +22,10 @@ public class LapisCastConsole : LapisCastBehaviour
     private TMP_Text consoleText;
     private DataList consoleLogList = new DataList();
 
-    [UdonSynced]
-    public VRCUrl lapiscastUrl = new VRCUrl("");
 
     [Space(20)]
     private string _currentPanel = "log";
-    [UdonSynced, FieldChangeCallback(nameof(LapisCastEnable))]
-    private bool _lapisCastEnable = true;
-    [UdonSynced, FieldChangeCallback(nameof(LapisCastLocalTestMode))]
-    private bool _lapisCastLocalTestMode = false;
+
     [SerializeField]
     private Toggle lapisCastEnableCheck;
 
@@ -61,31 +56,13 @@ public class LapisCastConsole : LapisCastBehaviour
     private Toggle LapisCastEventOutputToggle;
 
 
-    public bool LapisCastEnable
-    {
-        get => _lapisCastEnable;
-        set { _lapisCastEnable = value; lapisCastEnableCheck.isOn = value; LapisCast.EnableLapisCast = value; }
-    }
-    public bool LapisCastLocalTestMode
-    {
-        get => _lapisCastLocalTestMode;
-        set { _lapisCastLocalTestMode = value; lapisCastLocalTestModeCheck.isOn = value; LapisCast.LocalTestMode = value; }
-    }
-
     void Start()
     {
         LapisCastBehaviourInit();
         LapisCast = GetLapisCastCore();
 
         ClearConsoleText();
-        lapiscastUrl = LapisCast.InstanceURL;
-        if (Networking.IsOwner(Networking.LocalPlayer, gameObject))
-        {
-            LapisCastEnable = LapisCast.EnableLapisCast;
-            LapisCastLocalTestMode = LapisCast.LocalTestMode;
-        }
 
-        ApplyNewURL();
         SetPanelActive(_currentPanel);
 
         LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
@@ -94,7 +71,9 @@ public class LapisCastConsole : LapisCastBehaviour
 
     private void Update()
     {
-        ApplyNewURL();
+        UrlText.text = LapisCast.GetInstanceUrl().ToString();
+        lapisCastEnableCheck.isOn = LapisCast.GetLapisCastEnable();
+        lapisCastLocalTestModeCheck.isOn = LapisCast.GetLocalTestMode();
     }
 
 
@@ -128,22 +107,8 @@ public class LapisCastConsole : LapisCastBehaviour
         }
     }
 
-    public override void OnPlayerJoined(VRCPlayerApi player)
-    {
-        if(Networking.IsOwner(gameObject)){
-            RequestSerialization();
-        }
-    }
-
-    private void ApplyNewURL(){
-        LapisCast.InstanceURL = lapiscastUrl;
-        UrlText.text = lapiscastUrl.ToString();
-    }
-
     public void OnEnterURL(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        lapiscastUrl = urlInputField.GetUrl();
-        RequestSerialization();
+        LapisCast.SetInstanceUrl(urlInputField.GetUrl());
     }
 
     // panel
@@ -197,16 +162,12 @@ public class LapisCastConsole : LapisCastBehaviour
 
     public void ToggleLapisCastEnable()
     {
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        LapisCastEnable = !LapisCastEnable;
-        RequestSerialization();
+        LapisCast.SetLapisCastEnable(!LapisCast.GetLapisCastEnable());
     }
 
     public void ToggleLapisCastLocalTestMode()
     {
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        LapisCastLocalTestMode = !LapisCastLocalTestMode;
-        RequestSerialization();
+        LapisCast.SetLocalTestMode(!LapisCast.GetLocalTestMode());
     }
 
     public void ToggleLapisCastEventExec()
