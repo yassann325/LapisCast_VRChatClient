@@ -12,6 +12,7 @@ namespace LapisCast{
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class LapisCastCore : UdonSharpBehaviour
     {
+        // LapisCast Core Vals
         //Client Settings
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
@@ -50,13 +51,37 @@ namespace LapisCast{
         private float download_timer = 0;
         private float upload_timer = 0;
 
-        //TimelineClock
-        private LapisCastTimelineClock timelineClock;
         private VRCUrl timeAdjustmentUrl = new VRCUrl("https://lapis.yassann.net/lapiscast/public/00000000-0000-0000-0000-000000000000");
+
+        // =================================================== //
+        // LapisCast Clock Vals
+        [Tooltip("LapisCast単独使用の際のオフセットです。")]
+        public float StandaloneTimelineOffset = -7f;
+        [Tooltip("配信の時間情報を使用する際のオフセットです。")]
+        public float StreamTimelineOffset = -0.5f;
+        public bool UseStreamTimestamp = false;
+
+        // Adjust Target Timestamp
+        private double targetAdjustSceneStartTime = 0;
+        private double targetSceneStreamStartTime = 0;
+        // Current Adjusting Timecursor
+        private double adjustedSceneStartTime = 0;
+        private double sceneStreamStartTime = 0;
+
+        // Adjust Step Average List
+        private DataList unixOffsetList = new DataList();
+        private DataList streamTimeOffsetList = new DataList();
+
+        // World Init Time in Unity Client
+        private double gamePlayTimeOffset = 0;
 
 
         void Start()
-        {        
+        {
+            // Init Clock
+            adjustedSceneStartTime = targetAdjustSceneStartTime = GetLocalHostUnixTime();
+            gamePlayTimeOffset = Time.time;
+
             //Setting Timer
             download_timer = LoadingInterval;
             download_timer -= StartWaiting;
@@ -72,9 +97,6 @@ namespace LapisCast{
                 RequestSerialization();
             }
 
-            //Get TimelineClock
-            timelineClock = gameObject.GetComponent<LapisCastTimelineClock>();
-
             // If Empty Instance URL Access for time correction
             if(InstanceURL.ToString().Length == 0){
                 VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
@@ -82,7 +104,11 @@ namespace LapisCast{
         }
 
         private void Update() {
+            // Update Clock
+            adjustedSceneStartTime = MoveTowardsDouble(adjustedSceneStartTime, targetAdjustSceneStartTime, Time.deltaTime*0.5f);
+            sceneStreamStartTime = MoveTowardsDouble(sceneStreamStartTime, targetSceneStreamStartTime, Time.deltaTime*0.5f);
 
+            // StringLoading Loop
             if(download_timer >= LoadingInterval){
                 //Trigger StringLoading
                 StringDownload();
@@ -145,7 +171,7 @@ namespace LapisCast{
 
                 if(result.DataDictionary.TryGetValue("prop", TokenType.DataDictionary, out DataToken propValue)){
                     if(propValue.DataDictionary.TryGetValue("servtime", TokenType.Double, out DataToken servtime)){
-                        timelineClock.AdjustTimelineClock(servtime.Double, -0.1);
+                        AdjustTimelineClock(servtime.Double, -0.1);
                     }
                 }
                 else{
@@ -204,7 +230,7 @@ namespace LapisCast{
 
         //Play Timeline
         private void PlayTimeline(){
-            double baseTimestamp = timelineClock.GetTimestamp();
+            double baseTimestamp = GetTimestamp();
             DataList _timestamplist = downloadDataDict.GetKeys();
             DataList _removekeylist = new DataList();
             //Debug.Log($"TimeLine DataCount= {downloadDataDict.Count}");
@@ -213,7 +239,7 @@ namespace LapisCast{
                     if(downloadDataDict.TryGetValue(timestamp, TokenType.DataList, out DataToken messageFrameList)){
                         if(baseTimestamp - MaxEventDelay <= timestamp.Double){
                             if(timestamp.Double <= baseTimestamp){
-                                //Debug.Log($"TimeLine Play at {timestamp} currentTime={timelineClock.GetTimestamp().ToString()}");
+                                //Debug.Log($"TimeLine Play at {timestamp} currentTime={GetTimestamp().ToString()}");
                                 //Debug.Log(value.TokenType); //Dictionary
                                 for(int ii = 0; ii < messageFrameList.DataList.Count; ii++){
                                     if(messageFrameList.DataList.TryGetValue(ii, TokenType.DataDictionary, out DataToken flameEvents)){
@@ -292,7 +318,7 @@ namespace LapisCast{
             messageFrameDict.SetValue("eventkey", keyname);
             messageFrameDict.SetValue("value", value);
 
-            string timestamp = timelineClock.GetUnixTimestamp().ToString();
+            string timestamp = GetUnixTimestamp().ToString();
             
             //Add eventmessage to uploadDataDict
             if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){
@@ -344,10 +370,106 @@ namespace LapisCast{
             return this;
         }
 
-        // Get LapisCast Clock
-        public LapisCastTimelineClock GetLapisCastClock()
+        
+        //======================================================//
+        // Clock Functions
+
+        //getHostTimestamp
+        public double GetLocalHostUnixTime(){
+            DateTime now = DateTime.UtcNow;
+            // Unixエポック（1970年1月1日）を定義
+            DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            // 現在時刻とUnixエポックの差を求める
+            TimeSpan elapsedTime = now - unixEpoch;
+            // 秒単位の経過時間をdouble型で取得（小数点以下3桁まで）
+            return Math.Round(elapsedTime.TotalSeconds, 3);
+        }
+
+        //======================================================//
+        // LapisCast Clock
+        // return UnixTime when HostBased SceneStartTime or ServerBased SceneStartTime
+        public double GetUnixSceneStartTime(){
+            return adjustedSceneStartTime;
+        }
+
+        public double GetVRChatInstaneActiveTime()
         {
-            return timelineClock;
+            return Time.time - gamePlayTimeOffset;
+        }
+
+        // Adjust SceneStartTime use ServerBased Timestamp
+        public void AdjustTimelineClock(double serverTime, double offsetTime){
+            unixOffsetList.Add(new DataToken(serverTime + offsetTime - GetVRChatInstaneActiveTime()));
+            if(unixOffsetList.Count > 10){
+                unixOffsetList.RemoveAt(0);
+            }
+
+            double aveTime = 0;
+            for(int i = 0; i < unixOffsetList.Count; i++){
+                aveTime += unixOffsetList[i].Double;
+            }
+            aveTime /= unixOffsetList.Count;
+
+            targetAdjustSceneStartTime = aveTime;
+            // If there is a large deviation, it is forced to be applied.
+            if(Math.Abs(targetAdjustSceneStartTime - adjustedSceneStartTime) > 3){
+                adjustedSceneStartTime = targetAdjustSceneStartTime;
+            }
+        }
+
+        public double GetUnixTimestamp(){
+            return GetUnixSceneStartTime() + GetVRChatInstaneActiveTime();
+        }
+
+        private double MoveTowardsDouble(double current, double target, double maxDelta)
+        {
+            double difference = target - current;
+            if (Math.Abs(difference) <= maxDelta)
+                return target;
+            return current + Math.Sign(difference) * maxDelta;
+        }
+
+        //======================================================//
+        // Stream Clock
+        public void AdjustStreamTimelineClock(double streamTime, bool forceApply){
+            if (forceApply)
+            {
+                streamTimeOffsetList.Clear();
+            }
+
+            // 現在時刻とStreamTimeの違いを計測
+            streamTimeOffsetList.Add(new DataToken(streamTime - GetLocalHostUnixTime()));
+            if(streamTimeOffsetList.Count > 10){
+                streamTimeOffsetList.RemoveAt(0);
+            }
+
+            double aveTime = 0;
+            for(int i = 0; i < streamTimeOffsetList.Count; i++){
+                aveTime += streamTimeOffsetList[i].Double;
+            }
+            aveTime /= streamTimeOffsetList.Count;
+
+            targetSceneStreamStartTime = aveTime;
+            // If there is a large deviation, it is forced to be applied.
+            if(Math.Abs(targetSceneStreamStartTime - sceneStreamStartTime) > 3){
+                sceneStreamStartTime = targetSceneStreamStartTime;
+            }
+        }
+
+        public double GetStreamTimestamp(){
+            return sceneStreamStartTime + GetLocalHostUnixTime();
+        }
+
+
+        //======================================================//
+        // return preferential Timestamp
+        public double GetTimestamp(){
+            if(UseStreamTimestamp){
+                return GetStreamTimestamp() + StreamTimelineOffset;
+            }
+            else{
+                return GetUnixTimestamp() + StandaloneTimelineOffset;
+            }
         }
     }
 }

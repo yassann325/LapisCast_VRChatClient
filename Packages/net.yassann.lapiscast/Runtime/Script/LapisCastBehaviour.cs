@@ -83,7 +83,7 @@ namespace LapisCast{
         // Get LapisCast Unix Time
         public double GetLapisCastTimestamp()
         {
-            return _lapisCastCore.GetLapisCastClock().GetTimestamp();
+            return _lapisCastCore.GetTimestamp();
         }
     }
 }
