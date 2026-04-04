@@ -62,7 +62,8 @@ namespace LapisCast{
         public float StandaloneTimelineOffset = -7f;
         [Tooltip("配信の時間情報を使用する際のオフセットです。")]
         public float StreamTimelineOffset = -0.5f;
-        public bool UseStreamTimestamp = false;
+        [SerializeField, UdonSynced]
+        private bool UseStreamTimestamp = false;
 
         // Adjust Target Timestamp
         private double targetAdjustSceneStartTime = 0;
@@ -499,6 +500,15 @@ namespace LapisCast{
                 return GetUnixTimestamp() + StandaloneTimelineOffset;
             }
         }
+
+        // LapisCast Clock Param Setting
+        public void SetUseStreamTimestamp(bool state)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            UseStreamTimestamp = state;
+            RequestSerialization();
+        }
+        public bool GetUseStreamTimestamp() { return UseStreamTimestamp; }
     }
 }
 

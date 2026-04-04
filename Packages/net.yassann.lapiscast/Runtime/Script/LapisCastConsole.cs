@@ -54,6 +54,8 @@ public class LapisCastConsole : LapisCastBehaviour
     private Toggle LapisCastEventExecToggle;
     [SerializeField]
     private Toggle LapisCastEventOutputToggle;
+    [SerializeField]
+    private Toggle LapisCastUseStreamClockToggle;
 
 
     void Start()
@@ -74,6 +76,7 @@ public class LapisCastConsole : LapisCastBehaviour
         UrlText.text = LapisCast.GetInstanceUrl().ToString();
         lapisCastEnableCheck.isOn = LapisCast.GetLapisCastEnable();
         lapisCastLocalTestModeCheck.isOn = LapisCast.GetLocalTestMode();
+        LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
     }
 
 
@@ -168,6 +171,11 @@ public class LapisCastConsole : LapisCastBehaviour
     public void ToggleLapisCastLocalTestMode()
     {
         LapisCast.SetLocalTestMode(!LapisCast.GetLocalTestMode());
+    }
+
+    public void ToggleLapisCastUseStreamClock()
+    {
+        LapisCast.SetUseStreamTimestamp(!LapisCast.GetUseStreamTimestamp());
     }
 
     public void ToggleLapisCastEventExec()
