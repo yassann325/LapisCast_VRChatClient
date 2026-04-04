@@ -45,7 +45,6 @@ namespace LapisCast{
         private DataDictionary downloadDataDict = new DataDictionary();
         private LapisCastBehaviour[] lapisCastBehaviours = new LapisCastBehaviour[0];
         private double _lastAppliedTimestamp = 0;
-        private DataList httpRequestTimestamps = new DataList();
 
         //Timer
         private float download_timer = 0;
@@ -78,7 +77,6 @@ namespace LapisCast{
 
             // If Empty Instance URL Access for time correction
             if(InstanceURL.ToString().Length == 0){
-                httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
                 VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
             }
         }
@@ -130,7 +128,6 @@ namespace LapisCast{
                 if (InstanceURL.ToString().Length == 0){ return; }
                 VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
             }
-            httpRequestTimestamps.Add(new DataToken(timelineClock.GetLocalHostUnixTime()));
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
@@ -148,9 +145,7 @@ namespace LapisCast{
 
                 if(result.DataDictionary.TryGetValue("prop", TokenType.DataDictionary, out DataToken propValue)){
                     if(propValue.DataDictionary.TryGetValue("servtime", TokenType.Double, out DataToken servtime)){
-                        double httpAccessTime = timelineClock.GetLocalHostUnixTime() - httpRequestTimestamps[0].Double;
-                        httpRequestTimestamps.RemoveAt(0);
-                        timelineClock.AdjustTimelineClock(servtime.Double, -httpAccessTime / 2);
+                        timelineClock.AdjustTimelineClock(servtime.Double, -0.1);
                     }
                 }
                 else{
@@ -205,7 +200,6 @@ namespace LapisCast{
         {
             Debug.LogError(result.Error);
             Debug.Log($"{error_prefix}{result.Error}");
-            httpRequestTimestamps.RemoveAt(0);
         }
 
         //Play Timeline
