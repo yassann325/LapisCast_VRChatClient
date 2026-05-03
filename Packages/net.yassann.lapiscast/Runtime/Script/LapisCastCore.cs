@@ -300,10 +300,7 @@ namespace LapisCast{
         //Call per Namespace
         private void CallBehaviours(double timestamp, string spacename,string eventspace, string keyname, DataToken value){
             //Debug.Log("CallBehaviours");
-            bool sameinstance = false;
-            if(EventSpace == eventspace){   
-                sameinstance = true;          
-            }
+            bool sameinstance = EventSpace == eventspace;
             for(int i = 0; i < lapisCastBehaviours.Length; i++){
                 lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance);
             }
