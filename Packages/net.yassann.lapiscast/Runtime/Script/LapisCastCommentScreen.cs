@@ -4,22 +4,19 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.SDK3.Data;
+using VRC.Udon.Common.Interfaces;
+using VRC.SDK3.UdonNetworkCalling;
 using LapisCast;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastCommentScreen : LapisCastBehaviour
 {
-    [SerializeField]
-    private string CommentScreenSpaceName = "default";
-    [SerializeField]
-    private uint MaxCommentLength = 200;
-    [SerializeField]
-    private GameObject CommnetTemplate;
-    [SerializeField]
-    private Vector3 CommentObjectSpeed = new Vector3(-1, 0, 0);
-    [SerializeField]
-    private Transform CommnetsParent;
-    [SerializeField]
-    private LapisCastCommentScreenCommentSpawnCursor CommnetCursor;
+    public string CommentScreenSpaceName = "default";
+    public uint MaxCommentLength = 200;
+    public GameObject CommnetTemplate;
+    public Vector3 CommentObjectSpeed = new Vector3(-1, 0, 0);
+    public Transform CommnetsParent;
+    public LapisCastCommentScreenCommentSpawnCursor CommnetCursor;
 
     void Start()
     {
@@ -30,10 +27,28 @@ public class LapisCastCommentScreen : LapisCastBehaviour
 
     public override void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance)
     {
-        CreateNewCommnet(value.String);
+        // 同じインスタンスからのメッセージは無視する
+        if (!sameinstance)
+            CreateNewCommnet(value.String);
     }
 
-    // コメント生成
+    // 新しいコメントを生成する
+    // インスタンス内に同期
+    public void AdventLocalInstanceMessage(string comment)
+    {
+        SendCustomNetworkEvent(NetworkEventTarget.All, "OnAdventLocalInstanceMessage", comment);
+    }
+
+    // コメント生成のイベントを受けとる
+    // Lapisに送信
+    [NetworkCallable]
+    public void OnAdventLocalInstanceMessage(string comment)
+    {
+        SendLapisCast("c", comment);
+        CreateNewCommnet(comment);
+    }
+
+    // スクリーン上にコメントオブジェクトを生成
     public void CreateNewCommnet(string commnet){
         GameObject commnetObject = Instantiate(CommnetTemplate);
         commnetObject.SetActive(true);
@@ -49,8 +64,8 @@ public class LapisCastCommentScreen : LapisCastBehaviour
         commentDriver.ConfigCommnetText(commnetText, CommnetCursor.transform.localPosition + localSpawnPoint, CommnetCursor.transform.localRotation, moveDir, CommnetsParent, addtionalSpeed);
     }
 
-    // Test
+    // Send Test Commnet
     public void SendTestCommnet(){
-        CreateNewCommnet("Hello LapisCast!");
+        AdventLocalInstanceMessage("Hello LapisCast!");
     }
 }
