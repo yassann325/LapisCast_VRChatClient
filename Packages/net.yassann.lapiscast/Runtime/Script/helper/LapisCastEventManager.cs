@@ -82,52 +82,36 @@ namespace LapisCast{
             "","","","","","","","","","", "","","","","","","","","","", "","","","","","","","","","", "","","","","","","","","","",
             "","","","","","","","","","", "","","","","","","","","","", "","","","","","","","","","", "","","","","","","","","",""
         };
+        private DataToken _emptyEvent = new DataToken("");
 
 
         private void EventManagerInit()
         {
             for (int i = 0; i < LapisEventListBuffer.Count; i++)
             {
-                LapisEventListBuffer[i] = new DataToken();
+                LapisEventListBuffer[i] = _emptyEvent;
             }
         }
 
-        public void TestGetEventListSlotIndex()
+        private int GetEventListSlotIndex(int index)
         {
-            Debug.Log($"{GetEventListSlotIndex(GetLocalHostUnixTime())}");
+            return (index + LapisEventListBuffer.Count) % LapisEventListBuffer.Count;
         }
 
-        private int GetEventListSlotIndex(double timestamp)
+        private int GetEventListSlotIndexByTime(double timestamp)
         {
             double ListIntervalTime = timestamp % EventListLoopTime;
-            return Mathf.Clamp((int)(ListIntervalTime * EventFPS), 0, LapisEventListBuffer.Count - 1);
-        }
-
-        public void TestGetEventListTimestamp()
-        {
-            double time = GetLocalHostUnixTime();
-            int index = GetEventListSlotIndex(time);
-            Debug.Log($"{time} => {index} => {GetEventListTimestamp(index, time)}");
-        }
-
-        private DataToken GetEventListData(int eventFrameIndex)
-        {
-            return LapisEventListBuffer[eventFrameIndex % LapisEventListBuffer.Count];
+            return GetEventListSlotIndex((int)(ListIntervalTime * EventFPS));
         }
 
         private void SetEventListData(int eventFrameIndex, DataList eventList)
         {
             // Debug.Log($"SetEventListData Index: {eventFrameIndex}");
-            int index = eventFrameIndex % LapisEventListBuffer.Count;
-            if (LapisEventListBuffer[index].TokenType == TokenType.Null)
+            int index = GetEventListSlotIndex(eventFrameIndex);
+            if (LapisEventListBuffer[index].TokenType == TokenType.String)
             {
                 LapisEventListBuffer[index] = eventList;
             }
-        }
-
-        private void ClearEventListData(int eventFrameIndex)
-        {
-            LapisEventListBuffer[eventFrameIndex % LapisEventListBuffer.Count] = new DataToken();
         }
 
         private double GetEventListTimestamp(int eventFrameIndex, double baseTimestamp)
@@ -153,27 +137,28 @@ namespace LapisCast{
 
         //Play Timeline
         private void PlayTimeline(){
-            double baseTimestamp = GetTimestamp();
+            double eventPlayCursorTimestamp = GetTimestamp();
 
-            int currentEventExecHeadIndex = GetEventListSlotIndex(baseTimestamp);
-            int currentEventExecTailIndex = currentEventExecHeadIndex - (int)(EventFPS * MaxEventDelay) + LapisEventListBuffer.Count;
-            currentEventExecHeadIndex += LapisEventListBuffer.Count;
+            int currentEventExecHeadIndex = GetEventListSlotIndexByTime(eventPlayCursorTimestamp);
+            int currentEventExecTailIndex = GetEventListSlotIndexByTime(eventPlayCursorTimestamp - MaxEventDelay);
+            if (currentEventExecHeadIndex < currentEventExecTailIndex)
+            {
+                currentEventExecHeadIndex += LapisEventListBuffer.Count;
+            }
 
             // Debug.Log($"PlayTimeline ExecRange {currentEventExecTailIndex} -> {currentEventExecHeadIndex}");
             for (int i = currentEventExecTailIndex; i <= currentEventExecHeadIndex; i++)
             {
-                if(GetEventListData(i).TokenType == TokenType.DataList)
+                int index = GetEventListSlotIndex(i);
+                if(LapisEventListBuffer[index].TokenType == TokenType.DataList)
                 {              
-                    for (int eventListIndex = 0; eventListIndex < GetEventListData(i).DataList.Count; eventListIndex++)
+                    for (int eventListIndex = 0; eventListIndex < LapisEventListBuffer[index].DataList.Count; eventListIndex++)
                     {
-                        CallFlameEvents(GetEventListTimestamp(i, baseTimestamp), GetEventListData(i).DataList[eventListIndex].DataDictionary);
+                        CallFlameEvents(GetEventListTimestamp(i, eventPlayCursorTimestamp), LapisEventListBuffer[index].DataList[eventListIndex].DataDictionary);
                     }
-                    ClearEventListData(i);
                 }
-                else if (GetEventListData(i).TokenType != TokenType.Null)
-                {
-                    ClearEventListData(i);
-                }
+                // ClearEventListData
+                LapisEventListBuffer[index] = _emptyEvent;
             }
         }
 
@@ -182,11 +167,13 @@ namespace LapisCast{
             if (tsList.Count != eventList.Count)
                 return;
 
+            double eventPlayCursorTimestamp = GetTimestamp();
+
             for (int i = 0; i < tsList.Count; i++)
             {
-                if (tsList[i].TokenType == TokenType.Double && eventList[i].TokenType == TokenType.DataList)
+                if (tsList[i].TokenType == TokenType.Double && eventPlayCursorTimestamp - tsList[i].Double < 0.05 && eventList[i].TokenType == TokenType.DataList)
                 {
-                    SetEventListData(GetEventListSlotIndex(tsList[i].Double), eventList[i].DataList);
+                    SetEventListData(GetEventListSlotIndexByTime(tsList[i].Double), eventList[i].DataList);
                 }
             }
         }
