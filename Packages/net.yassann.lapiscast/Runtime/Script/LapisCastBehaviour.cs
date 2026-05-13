@@ -66,18 +66,24 @@ namespace LapisCast{
 
 
         // Exec Event Self
-        public void _triggerLapisEvent(string spanename, string keyname, DataToken value, bool sameinstance){
-            OnLapisCastAllEvent(spanename, keyname, value, sameinstance);
+        public void _triggerLapisEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance){
+            OnLapisCastAllEvent(timestamp, spanename, keyname, value, sameinstance);
             if(spanename == _script_spacename){
-                OnLapisCastEvent(spanename, keyname, value, sameinstance);
+                OnLapisCastEvent(timestamp, keyname, value, sameinstance);
             }      
         }
 
-        public virtual void OnLapisCastEvent(string spanename, string keyname, DataToken value, bool sameinstance){
+        public virtual void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance){
 
         }
-        public virtual void OnLapisCastAllEvent(string spanename, string keyname, DataToken value, bool sameinstance){
+        public virtual void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance){
 
+        }
+
+        // Get LapisCast Unix Time
+        public double GetLapisCastTimestamp()
+        {
+            return _lapisCastCore.GetTimestamp();
         }
     }
 }

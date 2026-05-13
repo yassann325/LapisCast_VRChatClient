@@ -12,8 +12,8 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastConsole : LapisCastBehaviour
 {
-    [SerializeField]
     private LapisCastCore LapisCast;
+
     [SerializeField]
     private VRCUrlInputField urlInputField;
     [SerializeField]
@@ -22,59 +22,61 @@ public class LapisCastConsole : LapisCastBehaviour
     private TMP_Text consoleText;
     private DataList consoleLogList = new DataList();
 
-    [UdonSynced]
-    public VRCUrl lapiscastUrl = new VRCUrl("");
 
     [Space(20)]
     private string _currentPanel = "log";
-    [UdonSynced, FieldChangeCallback(nameof(LapisCastEnable))]
-    private bool _lapisCastEnable = true;
-    [UdonSynced, FieldChangeCallback(nameof(LapisCastLocalTestMode))]
-    private bool _lapisCastLocalTestMode = false;
+
     [SerializeField]
     private Toggle lapisCastEnableCheck;
+
+    [Header("Menu Panels")]
     [SerializeField]
     private CanvasGroup logPanel;
     [SerializeField]
     private CanvasGroup debugPanel;
+    [SerializeField]
+    private CanvasGroup settingPanel;
 
+    [Header("Menu Toggles")]
     [SerializeField]
     private Toggle logPanelCheck;
     [SerializeField]
     private Toggle debugPanelCheck;
     [SerializeField]
+    private Toggle settingPanelCheck;
+
+    [Header("Debug Menu Things")]
+    [SerializeField]
     private Toggle lapisCastLocalTestModeCheck;
 
+    [Header("Debug Menu Things")]
+    [SerializeField]
+    private Toggle LapisCastEventExecToggle;
+    [SerializeField]
+    private Toggle LapisCastEventOutputToggle;
+    [SerializeField]
+    private Toggle LapisCastUseStreamClockToggle;
 
-    public bool LapisCastEnable
-    {
-        get => _lapisCastEnable;
-        set { _lapisCastEnable = value; lapisCastEnableCheck.isOn = value; LapisCast.EnableLapisCast = value; }
-    }
-    public bool LapisCastLocalTestMode
-    {
-        get => _lapisCastLocalTestMode;
-        set { _lapisCastLocalTestMode = value; lapisCastLocalTestModeCheck.isOn = value; LapisCast.LocalTestMode = value; }
-    }
 
     void Start()
     {
         LapisCastBehaviourInit();
-        ClearConsoleText();
-        lapiscastUrl = LapisCast.InstanceURL;
-        if (Networking.IsOwner(Networking.LocalPlayer, gameObject))
-        {
-            LapisCastEnable = LapisCast.EnableLapisCast;
-            LapisCastLocalTestMode = LapisCast.LocalTestMode;
-        }
+        LapisCast = GetLapisCastCore();
 
-        ApplyNewURL();
+        ClearConsoleText();
+
         SetPanelActive(_currentPanel);
+
+        LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
+        LapisCastEventOutputToggle.isOn = LapisCast.EnableLapisCastEventOutput;
     }
 
     private void Update()
     {
-        ApplyNewURL();
+        UrlText.text = LapisCast.GetInstanceUrl().ToString();
+        lapisCastEnableCheck.isOn = LapisCast.GetLapisCastEnable();
+        lapisCastLocalTestModeCheck.isOn = LapisCast.GetLocalTestMode();
+        LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
     }
 
 
@@ -85,7 +87,7 @@ public class LapisCastConsole : LapisCastBehaviour
         }
     }
 
-    public override void OnLapisCastAllEvent(string spanename, string keyname, DataToken value, bool sameinstance)
+    public override void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance)
     {
         string logLine = $"{spanename} | {keyname}/{value}";
         if (logLine.Length > 50)
@@ -108,22 +110,8 @@ public class LapisCastConsole : LapisCastBehaviour
         }
     }
 
-    public override void OnPlayerJoined(VRCPlayerApi player)
-    {
-        if(Networking.IsOwner(gameObject)){
-            RequestSerialization();
-        }
-    }
-
-    private void ApplyNewURL(){
-        LapisCast.InstanceURL = lapiscastUrl;
-        UrlText.text = lapiscastUrl.ToString();
-    }
-
     public void OnEnterURL(){
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        lapiscastUrl = urlInputField.GetUrl();
-        RequestSerialization();
+        LapisCast.SetInstanceUrl(urlInputField.GetUrl());
     }
 
     // panel
@@ -140,6 +128,7 @@ public class LapisCastConsole : LapisCastBehaviour
     public void SetPanelActive(string panelName){
         bool logPanelState = false;
         bool debugPanelState = false;
+        bool settingPanelState = false;
         
         if(panelName == "log"){
             logPanelState = true;
@@ -147,10 +136,16 @@ public class LapisCastConsole : LapisCastBehaviour
         else if(panelName == "debug"){
             debugPanelState = true;
         }
+        else if (panelName == "setting")
+        {
+            settingPanelState = true;
+        }
         logPanelCheck.isOn = logPanelState;
         debugPanelCheck.isOn = debugPanelState;
+        settingPanelCheck.isOn = settingPanelState;
         applyCanvasGroupSetting(logPanel, logPanelState);
         applyCanvasGroupSetting(debugPanel, debugPanelState);
+        applyCanvasGroupSetting(settingPanel, settingPanelState);
     }
 
     public void SetLogPanel(){
@@ -163,17 +158,33 @@ public class LapisCastConsole : LapisCastBehaviour
         SetPanelActive(_currentPanel);
     }
 
+    public void SetSettingPanel(){
+        _currentPanel = "setting";
+        SetPanelActive(_currentPanel);
+    }
+
     public void ToggleLapisCastEnable()
     {
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        LapisCastEnable = !LapisCastEnable;
-        RequestSerialization();
+        LapisCast.SetLapisCastEnable(!LapisCast.GetLapisCastEnable());
     }
 
     public void ToggleLapisCastLocalTestMode()
     {
-        Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        LapisCastLocalTestMode = !LapisCastLocalTestMode;
-        RequestSerialization();
+        LapisCast.SetLocalTestMode(!LapisCast.GetLocalTestMode());
+    }
+
+    public void ToggleLapisCastUseStreamClock()
+    {
+        LapisCast.SetUseStreamTimestamp(!LapisCast.GetUseStreamTimestamp());
+    }
+
+    public void ToggleLapisCastEventExec()
+    {
+        LapisCast.EnableLapisCastEventExec = LapisCastEventExecToggle.isOn;
+    }
+
+    public void ToggleLapisCastEventOutput()
+    {
+        LapisCast.EnableLapisCastEventOutput = LapisCastEventOutputToggle.isOn;
     }
 }
