@@ -63,6 +63,7 @@ public class LapisCastConsole : LapisCastBehaviour
 
         SetPanelActive(_currentPanel);
 
+        urlInputField.SetUrl(LapisCast.GetInstanceUrl());
         LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
         LapisCastEventOutputToggle.isOn = LapisCast.EnableLapisCastEventOutput;
     }
