@@ -73,13 +73,11 @@ namespace LapisCast{
             }      
         }
 
-        public virtual void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance){
+        public virtual void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance) {}
+        public virtual void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance) {}
 
-        }
-        public virtual void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance){
-
-        }
-
+        public virtual void OnChangePerformanceReader(VRCPlayerApi newReaderPlayer) {}
+        
         // Get LapisCast Unix Time
         public double GetLapisCastTimestamp()
         {

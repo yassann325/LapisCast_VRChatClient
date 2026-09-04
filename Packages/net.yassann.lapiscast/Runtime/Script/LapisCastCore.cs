@@ -90,6 +90,8 @@ namespace LapisCast{
         private void Update() {
             // Update Clock
             ClockUpdate();
+            // Update PerformanceSummary
+            PerformanceSummaryUpdate();
             
             // StringLoading Loop
             if(download_timer >= LoadingInterval){
@@ -141,6 +143,11 @@ namespace LapisCast{
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
         {
+            // PerformanceSummary
+            // 受信に成功していれば 0~2の範囲にする
+            lapiscastAccessStatus = Mathf.Clamp(lapiscastAccessStatus, 5, 9) + 1f;
+
+            // Decode Data
             string jsonstring = downloadresult.Result;
             //Debug.Log($"DownLoadData= {jsonstring}");
             if(VRCJson.TryDeserializeFromJson(jsonstring, out DataToken result))
@@ -184,6 +191,10 @@ namespace LapisCast{
 
         public override void OnStringLoadError(IVRCStringDownload result)
         {
+            // PerformanceSummary
+            // 受信に失敗したら -1 ~ -2にする
+            lapiscastAccessStatus = Mathf.Clamp(lapiscastAccessStatus, 0, -1) - 1f;
+
             Debug.LogError(result.Error);
             Debug.Log($"{error_prefix}{result.Error}");
         }
