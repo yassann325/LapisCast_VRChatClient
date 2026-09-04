@@ -227,11 +227,11 @@ namespace LapisCast{
             CallBehaviours(timestamp, spacename, eventspace, eventkey, value);
         }
         //Call per Namespace
-        private void CallBehaviours(double timestamp, string spacename,string eventspace, string keyname, DataToken value){
+        private void CallBehaviours(double timestamp, string spacename, string eventspace, string keyname, DataToken value){
             // Debug.Log($"CallBehaviours {timestamp} {spacename} {eventspace} {keyname}");
             bool sameinstance = EventSpace == eventspace;
             for(int i = 0; i < lapisCastBehaviours.Length; i++){
-                lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance);
+                lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance, eventspace);
             }
         }
 

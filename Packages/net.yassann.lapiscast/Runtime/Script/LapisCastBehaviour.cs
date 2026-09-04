@@ -66,15 +66,22 @@ namespace LapisCast{
 
 
         // Exec Event Self
-        public void _triggerLapisEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance){
+        public void _triggerLapisEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance, string eventspace){
             OnLapisCastAllEvent(timestamp, spanename, keyname, value, sameinstance);
+            OnLapisCastAllEvent(timestamp, spanename, keyname, value, sameinstance, eventspace);
             if(spanename == _script_spacename){
                 OnLapisCastEvent(timestamp, keyname, value, sameinstance);
+                OnLapisCastEvent(timestamp, keyname, value, sameinstance, eventspace);
             }      
         }
 
+        // Call LapisCast Message Event
         public virtual void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance) {}
+        public virtual void OnLapisCastEvent(double timestamp, string keyname, DataToken value, bool sameinstance, string eventspace) {}
+
         public virtual void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance) {}
+        public virtual void OnLapisCastAllEvent(double timestamp, string spanename, string keyname, DataToken value, bool sameinstance, string eventspace) {}
+
 
         public virtual void OnChangePerformanceReader(VRCPlayerApi newReaderPlayer) {}
         
