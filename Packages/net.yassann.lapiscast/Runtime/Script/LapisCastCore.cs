@@ -20,8 +20,6 @@ namespace LapisCast{
         public float LoadingInterval = 5f;
         public float MaxEventDelay = 1f;
         [SerializeField, UdonSynced]
-        public bool LocalTestMode = false;
-        [SerializeField, UdonSynced]
         private VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
         [SerializeField, UdonSynced]
         public bool EnableLapisCast = true;
@@ -30,7 +28,6 @@ namespace LapisCast{
         public bool DisableLogOnNonWindows = true;
 
         //Client Values
-        private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
         [UdonSynced, FieldChangeCallback(nameof(EventSpace))] private string eventSpace = "VRChat@defaultinstance";
         public string EventSpace
         {
@@ -92,7 +89,7 @@ namespace LapisCast{
             // StringLoading Loop
             if(download_timer >= LoadingInterval){
                 //Trigger StringLoading
-                StringDownload();
+                LapisCastTimelineDownload();
                 download_timer = 0;
             }
             else{
@@ -127,14 +124,10 @@ namespace LapisCast{
         }
 
         //Get Instance Data
-        private void StringDownload(){
+        private void LapisCastTimelineDownload(){
             if(!(EnableLapisCastEventExec && EnableLapisCast)) return;
-            if(LocalTestMode){
-                VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
-            }else{
-                if (InstanceURL.ToString().Length == 0){ return; }
-                VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
-            }
+            if (InstanceURL.ToString().Length == 0){ return; }
+            VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
@@ -294,13 +287,6 @@ namespace LapisCast{
         }
 
         // LapisCast Param Setting
-        public void SetLocalTestMode(bool state)
-        {
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            LocalTestMode = state;
-            RequestSerialization();
-        }
-        public bool GetLocalTestMode() { return LocalTestMode; }
 
         public void SetInstanceUrl(VRCUrl url)
         {

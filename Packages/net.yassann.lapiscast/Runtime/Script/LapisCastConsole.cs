@@ -47,10 +47,6 @@ public class LapisCastConsole : LapisCastBehaviour
 
     [Header("Debug Menu Things")]
     [SerializeField]
-    private Toggle lapisCastLocalTestModeCheck;
-
-    [Header("Debug Menu Things")]
-    [SerializeField]
     private Toggle LapisCastEventExecToggle;
     [SerializeField]
     private Toggle LapisCastEventOutputToggle;
@@ -75,7 +71,6 @@ public class LapisCastConsole : LapisCastBehaviour
     {
         UrlText.text = LapisCast.GetInstanceUrl().ToString();
         lapisCastEnableCheck.isOn = LapisCast.GetLapisCastEnable();
-        lapisCastLocalTestModeCheck.isOn = LapisCast.GetLocalTestMode();
         LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
     }
 
@@ -166,11 +161,6 @@ public class LapisCastConsole : LapisCastBehaviour
     public void ToggleLapisCastEnable()
     {
         LapisCast.SetLapisCastEnable(!LapisCast.GetLapisCastEnable());
-    }
-
-    public void ToggleLapisCastLocalTestMode()
-    {
-        LapisCast.SetLocalTestMode(!LapisCast.GetLocalTestMode());
     }
 
     public void ToggleLapisCastUseStreamClock()
