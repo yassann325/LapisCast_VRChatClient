@@ -71,13 +71,9 @@ namespace LapisCast{
             download_timer -= StartWaiting;
 
             //Init current instance EventSpaceId
-            if(Networking.IsOwner(Networking.LocalPlayer, gameObject)){
-                int instancehash = $"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode();
-                string EventSpaceId = Mathf.Abs(instancehash).ToString();
-                while(EventSpaceId.Length < 8){
-                    EventSpaceId = $"{EventSpaceId}0";
-                }
-                EventSpace = $"VRChat@{EventSpaceId}";
+            if(Networking.IsOwner(Networking.LocalPlayer, gameObject) && EventSpace == "VRChat@defaultinstance"){
+                int instancehash = Mathf.Abs($"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode());
+                EventSpace = $"VRChat@{instancehash.ToString().PadRight(8, '0')}";
                 RequestSerialization();
             }
 
@@ -291,11 +287,8 @@ namespace LapisCast{
         //subscribe client behaviours
         public LapisCastCore _subscribe_behaviour(LapisCastBehaviour behaviour){
             LapisCastBehaviour[] newList = new LapisCastBehaviour[lapisCastBehaviours.Length + 1];
-            for (int i = 0;i < lapisCastBehaviours.Length; i++){
-                newList[i] = lapisCastBehaviours[i];
-            }
+            Array.Copy(lapisCastBehaviours, newList, lapisCastBehaviours.Length);
             newList[lapisCastBehaviours.Length] = behaviour;
-
             lapisCastBehaviours = newList;
             return this;
         }
