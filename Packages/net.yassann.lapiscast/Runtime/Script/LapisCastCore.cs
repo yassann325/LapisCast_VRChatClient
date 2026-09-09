@@ -20,8 +20,6 @@ namespace LapisCast{
         public float LoadingInterval = 5f;
         public float MaxEventDelay = 1f;
         [SerializeField, UdonSynced]
-        public bool LocalTestMode = false;
-        [SerializeField, UdonSynced]
         private VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
         [SerializeField, UdonSynced]
         public bool EnableLapisCast = true;
@@ -30,7 +28,6 @@ namespace LapisCast{
         public bool DisableLogOnNonWindows = true;
 
         //Client Values
-        private VRCUrl localTestURL = new VRCUrl("http://localhost:48080/test/lapiscast");
         [UdonSynced, FieldChangeCallback(nameof(EventSpace))] private string eventSpace = "VRChat@defaultinstance";
         public string EventSpace
         {
@@ -71,13 +68,9 @@ namespace LapisCast{
             download_timer -= StartWaiting;
 
             //Init current instance EventSpaceId
-            if(Networking.IsOwner(Networking.LocalPlayer, gameObject)){
-                int instancehash = $"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode();
-                string EventSpaceId = Mathf.Abs(instancehash).ToString();
-                while(EventSpaceId.Length < 8){
-                    EventSpaceId = $"{EventSpaceId}0";
-                }
-                EventSpace = $"VRChat@{EventSpaceId}";
+            if(Networking.IsOwner(Networking.LocalPlayer, gameObject) && EventSpace == "VRChat@defaultinstance"){
+                int instancehash = Mathf.Abs($"{Networking.LocalPlayer.displayName}{DateTime.Now.Millisecond}".GetHashCode());
+                EventSpace = $"VRChat@{instancehash.ToString().PadRight(8, '0')}";
                 RequestSerialization();
             }
 
@@ -90,11 +83,13 @@ namespace LapisCast{
         private void Update() {
             // Update Clock
             ClockUpdate();
+            // Update PerformanceSummary
+            PerformanceSummaryUpdate();
             
             // StringLoading Loop
             if(download_timer >= LoadingInterval){
                 //Trigger StringLoading
-                StringDownload();
+                LapisCastTimelineDownload();
                 download_timer = 0;
             }
             else{
@@ -129,18 +124,19 @@ namespace LapisCast{
         }
 
         //Get Instance Data
-        private void StringDownload(){
+        private void LapisCastTimelineDownload(){
             if(!(EnableLapisCastEventExec && EnableLapisCast)) return;
-            if(LocalTestMode){
-                VRCStringDownloader.LoadUrl(localTestURL, (IUdonEventReceiver)this);
-            }else{
-                if (InstanceURL.ToString().Length == 0){ return; }
-                VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
-            }
+            if (InstanceURL.ToString().Length == 0){ return; }
+            VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
         {
+            // PerformanceSummary
+            // 受信に成功していれば 0~2の範囲にする
+            lapiscastAccessStatus = Mathf.Clamp(lapiscastAccessStatus, 5, 9) + 1f;
+
+            // Decode Data
             string jsonstring = downloadresult.Result;
             //Debug.Log($"DownLoadData= {jsonstring}");
             if(VRCJson.TryDeserializeFromJson(jsonstring, out DataToken result))
@@ -184,6 +180,10 @@ namespace LapisCast{
 
         public override void OnStringLoadError(IVRCStringDownload result)
         {
+            // PerformanceSummary
+            // 受信に失敗したら -1 ~ -2にする
+            lapiscastAccessStatus = Mathf.Clamp(lapiscastAccessStatus, 0, -1) - 1f;
+
             Debug.LogError(result.Error);
             Debug.Log($"{error_prefix}{result.Error}");
         }
@@ -216,11 +216,11 @@ namespace LapisCast{
             CallBehaviours(timestamp, spacename, eventspace, eventkey, value);
         }
         //Call per Namespace
-        private void CallBehaviours(double timestamp, string spacename,string eventspace, string keyname, DataToken value){
+        private void CallBehaviours(double timestamp, string spacename, string eventspace, string keyname, DataToken value){
             // Debug.Log($"CallBehaviours {timestamp} {spacename} {eventspace} {keyname}");
             bool sameinstance = EventSpace == eventspace;
             for(int i = 0; i < lapisCastBehaviours.Length; i++){
-                lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance);
+                lapisCastBehaviours[i]._triggerLapisEvent(timestamp, spacename, keyname, value, sameinstance, eventspace);
             }
         }
 
@@ -280,23 +280,13 @@ namespace LapisCast{
         //subscribe client behaviours
         public LapisCastCore _subscribe_behaviour(LapisCastBehaviour behaviour){
             LapisCastBehaviour[] newList = new LapisCastBehaviour[lapisCastBehaviours.Length + 1];
-            for (int i = 0;i < lapisCastBehaviours.Length; i++){
-                newList[i] = lapisCastBehaviours[i];
-            }
+            Array.Copy(lapisCastBehaviours, newList, lapisCastBehaviours.Length);
             newList[lapisCastBehaviours.Length] = behaviour;
-
             lapisCastBehaviours = newList;
             return this;
         }
 
         // LapisCast Param Setting
-        public void SetLocalTestMode(bool state)
-        {
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            LocalTestMode = state;
-            RequestSerialization();
-        }
-        public bool GetLocalTestMode() { return LocalTestMode; }
 
         public void SetInstanceUrl(VRCUrl url)
         {

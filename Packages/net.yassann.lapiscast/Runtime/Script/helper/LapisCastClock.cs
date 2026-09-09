@@ -23,10 +23,10 @@ namespace LapisCast{
 
         // Adjust Target Timestamp
         private double targetAdjustSceneStartTime = 0;
-        private double targetSceneStreamStartTime = 0;
+        private double StreamTimeDiffTarget = 0;
         // Current Adjusting Timecursor
         private double adjustedSceneStartTime = 0;
-        private double sceneStreamStartTime = 0;
+        private double StreamTimeDiff = 0;
 
         // Adjust Step Average List
         private DataList unixOffsetList = new DataList();
@@ -46,7 +46,7 @@ namespace LapisCast{
         {
             // Update Clock
             adjustedSceneStartTime = MoveTowardsDouble(adjustedSceneStartTime, targetAdjustSceneStartTime, Time.deltaTime*0.1f);
-            sceneStreamStartTime = MoveTowardsDouble(sceneStreamStartTime, targetSceneStreamStartTime, Time.deltaTime*0.1f);
+            StreamTimeDiff = MoveTowardsDouble(StreamTimeDiff, StreamTimeDiffTarget, Time.deltaTime*0.1f);
         }
 
         //======================================================//
@@ -96,6 +96,7 @@ namespace LapisCast{
         }
 
         public double GetUnixTimestamp(){
+            // シーン開始時間(補正unix)とシーン経過時間を足して LapisServerTimeを基準にしたunix時刻を作成
             return GetUnixSceneStartTime() + GetVRChatInstaneActiveTime();
         }
 
@@ -121,26 +122,28 @@ namespace LapisCast{
                 streamTimeOffsetList.RemoveAt(0);
             }
 
-            double aveTime = 0;
+            // 現在時刻とStreamTimeのずれの平均を計算
+            double aveDiffTime = 0;
             for(int i = 0; i < streamTimeOffsetList.Count; i++){
-                aveTime += streamTimeOffsetList[i].Double;
+                aveDiffTime += streamTimeOffsetList[i].Double;
             }
-            aveTime /= streamTimeOffsetList.Count;
+            aveDiffTime /= streamTimeOffsetList.Count;
 
-            targetSceneStreamStartTime = aveTime;
+            StreamTimeDiffTarget = aveDiffTime;
             // If there is a large deviation, it is forced to be applied.
-            if(Math.Abs(targetSceneStreamStartTime - sceneStreamStartTime) > 3){
-                sceneStreamStartTime = targetSceneStreamStartTime;
+            if(Math.Abs(StreamTimeDiffTarget - StreamTimeDiff) > 3){
+                StreamTimeDiff = StreamTimeDiffTarget;
             }
         }
 
         public double GetStreamTimestamp(){
-            return sceneStreamStartTime + GetLocalHostUnixTime();
+            // ローカルホストTimeと配信側の開始時間を足して配信内のタイムスタンプを取得
+            return StreamTimeDiff + GetLocalHostUnixTime();
         }
 
 
         //======================================================//
-        // return preferential Timestamp
+        // LapisCastで使用するタイムスタンプを取得
         public double GetTimestamp(){
             if(UseStreamTimestamp){
                 return GetStreamTimestamp() + StreamTimelineOffset;
@@ -151,12 +154,14 @@ namespace LapisCast{
         }
 
         // LapisCast Clock Param Setting
+        // 使用するタイムソースの種類を設定
         public void SetUseStreamTimestamp(bool state)
         {
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
             UseStreamTimestamp = state;
             RequestSerialization();
         }
+        // 現在どちらのタイムソースを使用しているかを取得
         public bool GetUseStreamTimestamp() { return UseStreamTimestamp; }
 
     }
