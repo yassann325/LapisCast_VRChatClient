@@ -78,7 +78,7 @@ namespace LapisCast{
             // If AutoTimeAjustFirst Access for time correction
             if(AutoTimeAjustFirst){
                 VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
-                download_timer = MathF.Min(download_timer, -5f);
+                download_timer = Mathf.Min(download_timer, -5f);
             }
         }
 
