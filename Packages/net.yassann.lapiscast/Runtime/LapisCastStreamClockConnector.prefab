@@ -27,12 +27,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 421160117773060589}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 489159380582829797}
+  m_Father: {fileID: 8125590375864416181}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &1320103309429273329
 AudioSource:
@@ -169,8 +169,61 @@ MonoBehaviour:
   m_Script: {fileID: 1361866905, guid: 661092b4961be7145bfbe56e1e62337b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  videoPlayer: {fileID: 5217796146965141444}
+  videoPlayer: {fileID: 2844607489080855488}
   mode: 0
+--- !u!1 &2848796415893976506
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8125590375864416181}
+  - component: {fileID: 2844607489080855488}
+  m_Layer: 0
+  m_Name: VideoPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8125590375864416181
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2848796415893976506}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8176319918366224707}
+  - {fileID: 3524514758690164179}
+  m_Father: {fileID: 489159380582829797}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2844607489080855488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2848796415893976506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1743794047, guid: 661092b4961be7145bfbe56e1e62337b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EnableAutomaticResync: 0
+  videoURL:
+    url: 
+  autoPlay: 0
+  loop: 0
+  maximumResolution: 1080
+  useLowLatency: 1
 --- !u!1 &3493424784226021192
 GameObject:
   m_ObjectHideFlags: 0
@@ -202,8 +255,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8176319918366224707}
-  - {fileID: 3524514758690164179}
+  - {fileID: 8125590375864416181}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &556311089952225901
@@ -228,18 +280,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 7892899371784915675}
+  Enabled: 1
+  AVProVideoPlayer: {fileID: 2844607489080855488}
+  VideoScreenRenderer: {fileID: 7538405307579834006}
   ClockUpdateInterval: 3
-  ReloadTriggerFailCount: 3
   ForceApplyTime: 0
-  screenRenderer: {fileID: 7538405307579834006}
+  TextureSamplingHeight: 4
   FlipAjustMaterial: {fileID: 2100000, guid: 882a41d7bb564934f8700fa5a1cf8505, type: 2}
   FlipAjustRTexture: {fileID: 8400000, guid: ca6b885990ba76f41b5eadd4a354d1d7, type: 2}
-  VideoPlayerEnabled: 1
-  StreamURL:
+  VideoPlayerControlEnabled: 0
+  VideoURL:
     url: 
-  _avProVideoPlayer: {fileID: 5217796146965141444}
   FirstLoadWait: 1
   RetryInterval: 10
+  ReloadTriggerFailCount: 3
 --- !u!114 &7892899371784915675
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,7 +331,6 @@ GameObject:
   - component: {fileID: 8176319918366224707}
   - component: {fileID: 3359872931989123592}
   - component: {fileID: 7538405307579834006}
-  - component: {fileID: 5217796146965141444}
   - component: {fileID: 6666505644056267064}
   m_Layer: 0
   m_Name: Screen
@@ -299,7 +352,7 @@ Transform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 489159380582829797}
+  m_Father: {fileID: 8125590375864416181}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &3359872931989123592
 MeshFilter:
@@ -321,7 +374,7 @@ MeshRenderer:
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
-  m_MotionVectors: 2
+  m_MotionVectors: 1
   m_LightProbeUsage: 0
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
@@ -351,25 +404,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &5217796146965141444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4870568521561817934}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1743794047, guid: 661092b4961be7145bfbe56e1e62337b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  EnableAutomaticResync: 0
-  videoURL:
-    url: 
-  autoPlay: 0
-  loop: 0
-  maximumResolution: 720
-  useLowLatency: 1
 --- !u!114 &6666505644056267064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -382,7 +416,7 @@ MonoBehaviour:
   m_Script: {fileID: -1889044836, guid: 661092b4961be7145bfbe56e1e62337b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  videoPlayer: {fileID: 5217796146965141444}
+  videoPlayer: {fileID: 2844607489080855488}
   materialIndex: 0
   textureProperty: _MainTex
   useSharedMaterial: 0

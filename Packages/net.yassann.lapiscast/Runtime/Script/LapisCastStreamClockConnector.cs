@@ -6,164 +6,148 @@ using VRC.Udon;
 using VRC.SDK3.Rendering;
 using VRC.Udon.Common.Interfaces;
 using System;
-using VRC.SDK3.Video.Components.Base;
+using VRC.SDK3.Video.Components.AVPro;
 
 // 動画中のタイムスタンプを取得してLapisCastに適用する
+// ストリームからタイムスタンプが検出され、かつ ずれがある際には自動リロード
+
 namespace LapisCast{
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class LapisCastStreamClockConnector : LapisCastBehaviour
     {
-        public float ClockUpdateInterval = 3f; // ストリームからタイムスタンプを読み出すインターバル時間 (秒)
-        public short ReloadTriggerFailCount = 3; // タイムスタンプの増加幅が正常ではない場合にリロードを実行するまでのエラー回数
-        public bool ForceApplyTime = false; // 補完や増加速度の検証をせずに常にタイムスタンプを適用する
-        public bool DontTouchVideoPlayer = false; // AVProPlayerを直接制御しなくなる
-        public MeshRenderer screenRenderer; // AVProPlayer VideoScreen の対象のメッシュ
-        public Material FlipAjustMaterial;
-        public RenderTexture FlipAjustRTexture;
-
-        [Space(10)]
-        public bool CallVideoPlayerControlEvent = false; // Play(), Stop() の際に外部のイベントを呼ぶようになる
-        [Space(10)]
-        public UdonSharpBehaviour[] OnPlayCallBehaviours;
-        public string[] OnPlayCallEventNames;
-        [Space(10)]
-        public UdonSharpBehaviour[] OnStopCallBehaviours;
-        public string[] OnStopCallEventNames;
-
-        private float loopTimer = 0;
-        private RenderTexture sourceTexture = null;
-        private double Stream_Unity_DiffTime = 0;
-        private short StreamTime_Mismatch_Count = 0;
-
-
+        [SerializeField]
+        private bool ReadTimestampEnabled = true;
+        [SerializeField]
+        private VRCAVProVideoPlayer AVProVideoPlayer;
+        [SerializeField]
+        private MeshRenderer VideoScreenRenderer; // AVProPlayer VideoScreen の対象のメッシュ
 
         [Space(20)]
-        public bool VideoPlayerEnabled = true;
+        [SerializeField]
+        private float ClockUpdateInterval = 3f; // ストリームからタイムスタンプを読み出すインターバル時間 (秒)
+        [SerializeField]
+        private bool ForceApplyTime = false; // 補完や増加速度の検証をせずに常にタイムスタンプを適用する
+        [SerializeField]
+        private uint TextureSamplingHeight = 4; // プレーヤーからタイムスタンプを読み出す際のサンプリングする高さ(px)
+        [SerializeField]
+        private Material FlipAjustMaterial;// プレーヤーからの画像の上下反転補正用のマテリアル
+        [SerializeField]
+        private RenderTexture FlipAjustRTexture; // プレーヤーからの画像の上下反転補正用のコピーテクスチャ
+        private double Stream_Unity_DiffTime = 0;
+        private ushort StreamTime_Mismatch_Count = 0; // 読み出したデータのタイムスタンプが想定値からずれすぎていた回数
+        private float LastClockCheckTime = 0f;
 
+        [Space(20)]
         [SerializeField]
-        private VRCUrl StreamURL = new VRCUrl("");
+        private bool LapisCastVideoPlayerEnabled = false; // LapisCast組み込みプレイヤーを使用するか
         [SerializeField]
-        private BaseVRCVideoPlayer _avProVideoPlayer;
+        private VRCUrl VideoUrl = new VRCUrl(""); // LapisCastStreamClockConnectorが単体で自動再生するURL
         [SerializeField]
-        private float FirstLoadWait = 5f; // Joinしてからロードするまでの待機時間
+        private float FirstLoadWait = 2f; // Joinしてからロードするまでの待機時間
         [SerializeField]
         private float RetryInterval = 20f; // ロードが失敗した際の待機時間
+        [SerializeField]
+        private ushort ReloadTriggerFailCount = 3; // タイムスタンプのずれによって再読み込みする閾値
 
-        private float _reloadTimer = 0f;
+        private VRCUrl CurrentUrl;
+        private VRCUrl SuspendUrl = new VRCUrl("");
+        private float LastVideoPlayerTryLoadTime = 0f;
 
         // =========================== //
-        void OnEnable()
-        {
-            ResetVideoReloadTimer();
-        }
 
         void Start()
         {
             LapisCastBehaviourInit();
+            LastClockCheckTime = Time.unscaledTime;
+            LastVideoPlayerTryLoadTime = Time.unscaledTime - Mathf.Max(FirstLoadWait, 0);
+
+            // VideoUrl がある場合は最初に Currentに設定
+            // 後から上書き可能
+            if (LapisCastVideoPlayerEnabled && !string.IsNullOrEmpty(VideoUrl.ToString()))
+            {
+                CurrentUrl = VideoUrl;
+            }
         }
 
         void Update()
         {
-            // VideoPlayer
-            if (VideoPlayerEnabled)
-            {
-                _reloadTimer += Time.deltaTime;
-                if (!_avProVideoPlayer.IsPlaying)
-                {              
-                    if (_reloadTimer >= RetryInterval && StreamTime_Mismatch_Count == 0)
-                    {
-                        // Play Stream
-                        Play();
-                        _reloadTimer = 0;
-                    }
-                }
-            }
-            else
-            {
-                ResetVideoReloadTimer();
-            }
-
             // Texture Decoader
-            if (Utilities.IsValid(_avProVideoPlayer))
+            if (ReadTimestampEnabled && Utilities.IsValid(AVProVideoPlayer) && Utilities.IsValid(VideoScreenRenderer))
             {
-                if (!_avProVideoPlayer.IsPlaying)
+                if (AVProVideoPlayer.IsPlaying)
                 {
-                    Stream_Unity_DiffTime = 0;
-                    StreamTime_Mismatch_Count = 0;
-                }
-
-                if (Utilities.IsValid(screenRenderer))
-                {             
-                    var mainTexture = screenRenderer.material.GetTexture("_MainTex");
+                   var mainTexture = VideoScreenRenderer.material.GetTexture("_MainTex");
                     if (Utilities.IsValid(mainTexture))
                     {
-                        VRCGraphics.Blit(mainTexture, FlipAjustRTexture, FlipAjustMaterial);
-
-                        if(loopTimer > ClockUpdateInterval){
-                            loopTimer = 0;
-                            if (_avProVideoPlayer.IsPlaying)
+                        if(Time.unscaledTime - LastClockCheckTime > ClockUpdateInterval){
+                            LastClockCheckTime = Time.unscaledTime;
+                            if (AVProVideoPlayer.IsPlaying)
                             {
-                                ReadTexture(FlipAjustRTexture);
+                                RequestReadTimeDataTexture(mainTexture);
                             }
                         }
-                        loopTimer += Time.deltaTime;
+                    } 
+                }
+                else
+                {
+                    ResetStreamTimeInfo();
+                }
+            }
+
+            // VideoPlayer
+            if (LapisCastVideoPlayerEnabled && !string.IsNullOrEmpty(CurrentUrl.ToString()))
+            {
+                // タイムスタンプにずれが蓄積したときのリロード
+                if (AVProVideoPlayer.IsPlaying) {
+                    if (StreamTime_Mismatch_Count >= Mathf.Max(ReloadTriggerFailCount, 1))
+                    {
+                        VideoPlayerPlay(CurrentUrl);
                     }
                 }
-
-                // Get New Timestamp Reload
-                if (ReloadTriggerFailCount >= 0 && StreamTime_Mismatch_Count >= ReloadTriggerFailCount)
-                {
-                    Play();
+                // プレイヤーが停止している状態からの自動リロード
+                else
+                {              
+                    if (Time.unscaledTime - LastVideoPlayerTryLoadTime >= RetryInterval && StreamTime_Mismatch_Count == 0)
+                    {
+                        VideoPlayerPlay(CurrentUrl);
+                    }
                 }
             }
+        }
+
+        public void VideoPlayerPlay(VRCUrl playUrl)
+        {
+            if(!LapisCastVideoPlayerEnabled) return;
+
+            VideoPlayerStop();
+            CurrentUrl = playUrl;
+            AVProVideoPlayer.PlayURL(CurrentUrl);
+            LastVideoPlayerTryLoadTime = Time.unscaledTime;
+        }
+
+        public void VideoPlayerStop()
+        {
+            if(!LapisCastVideoPlayerEnabled) return;
+
+            CurrentUrl = SuspendUrl;
+            AVProVideoPlayer.Stop();
+            ResetStreamTimeInfo();
+        }
+
+        private void ResetStreamTimeInfo()
+        {
+            Stream_Unity_DiffTime = 0;
+            StreamTime_Mismatch_Count = 0;
         }
 
         // =========================== //
 
-        private void ResetVideoReloadTimer()
+        public void RequestReadTimeDataTexture(Texture texture)
         {
-            _reloadTimer = RetryInterval + Mathf.Max(0, FirstLoadWait) * -1;
-        }
-
-        private void Play()
-        {
-            Stop();
-
-            if(!DontTouchVideoPlayer)
-                _avProVideoPlayer.PlayURL(StreamURL);
-            
-            if (CallVideoPlayerControlEvent)
-            {
-                for (int i = 0; i < OnPlayCallBehaviours.Length; i++)
-                {
-                    OnPlayCallBehaviours[i].SendCustomEvent(OnPlayCallEventNames[i]);
-                }
-            }
-        }
-
-        private void Stop()
-        {
-            if (!DontTouchVideoPlayer && _avProVideoPlayer.IsPlaying)
-            {
-                _avProVideoPlayer.Stop();
-            }
-
-            if (CallVideoPlayerControlEvent)
-            {
-                for (int i = 0; i < OnStopCallBehaviours.Length; i++)
-                {
-                    OnStopCallBehaviours[i].SendCustomEvent(OnStopCallEventNames[i]);
-                }
-            }
-        }
-
-        // =========================== //
-
-        public void ReadTexture(RenderTexture rt)
-        {
-            sourceTexture = rt;
+            // Ajust Platform Texture Upside
+            VRCGraphics.Blit(texture, FlipAjustRTexture, FlipAjustMaterial);
             // GPU ReadBack Sampling
-            VRCAsyncGPUReadback.Request(rt, 0, (IUdonEventReceiver)this);
-
+            VRCAsyncGPUReadback.Request(FlipAjustRTexture, 0, (IUdonEventReceiver)this);
         }
 
         public override void OnAsyncGpuReadbackComplete(VRCAsyncGPUReadbackRequest request)
@@ -175,31 +159,27 @@ namespace LapisCast{
             }
             else
             {
-                var px = new Color32[sourceTexture.width * sourceTexture.height];
+                var px = new Color32[FlipAjustRTexture.width * FlipAjustRTexture.height];
                 bool result = request.TryGetData(px);
                 if(!result){
                     return;
                 }
                 // Debug.Log("GPU readback success: " + result);
-                // Debug.Log("GPU readback size: " + SourceTexture.width + " x " + SourceTexture.height);
+                // Debug.Log("GPU readback size: " + FlipAjustRTexture.width + " x " + FlipAjustRTexture.height);
 
                 SamplingTimestampData(ReadTimestampPixel(px));
             }
         }
 
 
-        public RenderTexture GetStreamTimestampSourceTexture(){
-            return sourceTexture;
-        }
-
         // Color32[]からlong部分を読み取り
-        public Color32[] ReadTimestampPixel(Color32[] px)
+        private Color32[] ReadTimestampPixel(Color32[] px)
         {
             Color32[] dpx = new Color32[65];
             for(int i = 0; i < dpx.Length; i++){
                 // テスクチャ下部の場所をサンプリングする
                 // x: 0 ~ width  y: 4
-                int pxIndex = (FlipAjustRTexture.width * i / dpx.Length + FlipAjustRTexture.width / (dpx.Length * 2)) + 4 * FlipAjustRTexture.width;
+                int pxIndex = (FlipAjustRTexture.width * i / dpx.Length + FlipAjustRTexture.width / (dpx.Length * 2)) + (int)TextureSamplingHeight * FlipAjustRTexture.width;
                 dpx[i] = px[pxIndex];
             }
 
@@ -237,7 +217,7 @@ namespace LapisCast{
         }
 
         // Color32[64]からlongに変換して適用
-        public void SamplingTimestampData(Color32[] longDataPixels)
+        private void SamplingTimestampData(Color32[] longDataPixels)
         {
             if (longDataPixels.Length != 65)
             {
@@ -272,6 +252,9 @@ namespace LapisCast{
                 {
                     GetLapisCastCore().AdjustStreamTimelineClock(streamTime, false);
                     Stream_Unity_DiffTime = stream_Unity_DiffTime;
+
+                    // 正常値が読み出せた場合は StreamTime_Mismatch_Count をリセット
+                    StreamTime_Mismatch_Count = 0;
                 }
                 // ラグなどでずれが蓄積した場合
                 else
@@ -280,5 +263,10 @@ namespace LapisCast{
                 }
             }
         }
+
+        // =========================== //
+        
+        public VRCAVProVideoPlayer AttachedAVProVideoPlayer => AVProVideoPlayer;
+        public MeshRenderer AttachedVideoScreenRenderer => VideoScreenRenderer;
     }
 }
