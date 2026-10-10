@@ -138,7 +138,7 @@ namespace LapisCast{
 
             StreamTimeDiffTarget = aveDiffTime;
             // If there is a large deviation, it is forced to be applied.
-            if(Math.Abs(StreamTimeDiffTarget - StreamTimeDiff) > 3){
+            if(Math.Abs(StreamTimeDiffTarget - StreamTimeDiff) > 3 || forceApply){
                 StreamTimeDiff = StreamTimeDiffTarget;
             }
         }
