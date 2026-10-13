@@ -63,3 +63,13 @@ crashlytics-build.properties
 Assets/PackageMakerWindowData.asset*
 .idea
 .vscode
+
+# Ignore VCC ClientSim PlayerStorage
+/ClientSimStorage/PlayerData/*
+/ClientSimStorage/PlayerObjects/*
+
+# Ignore lilToon Files
+/ProjectSettings/lilToonSetting.json
+
+# Ignore UserSettings
+/UserSettings*
