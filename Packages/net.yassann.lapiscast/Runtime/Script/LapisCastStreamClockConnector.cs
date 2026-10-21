@@ -8,6 +8,8 @@ using VRC.Udon.Common.Interfaces;
 using System;
 using VRC.SDK3.Video.Components.AVPro;
 
+using HoshinoLabs.IwaSync3.Udon;
+
 // 動画中のタイムスタンプを取得してLapisCastに適用する
 // ストリームからタイムスタンプが検出され、かつ ずれがある際には自動リロード
 
@@ -18,13 +20,13 @@ namespace LapisCast{
         [SerializeField]
         private bool ReadTimestampEnabled = true;
         [SerializeField]
-        private VRCAVProVideoPlayer AVProVideoPlayer;
-        [SerializeField]
-        private MeshRenderer VideoScreenRenderer; // AVProPlayer VideoScreen の対象のメッシュ
+        VideoCore core; // IwaSync プレイヤー
 
         [Space(20)]
         [SerializeField]
         private float ClockUpdateInterval = 3f; // ストリームからタイムスタンプを読み出すインターバル時間 (秒)
+        [SerializeField]
+        private float ReadTimestampWait = 2f; // 動画再生が始まってからタイムスタンプを読み出すまでの遅延時間 (秒)
         [SerializeField]
         private bool ForceApplyTime = false; // 補完や増加速度の検証をせずに常にタイムスタンプを適用する
         [SerializeField]
@@ -36,22 +38,13 @@ namespace LapisCast{
         private double Stream_Unity_DiffTime = 0;
         private ushort StreamTime_Mismatch_Count = 0; // 読み出したデータのタイムスタンプが想定値からずれすぎていた回数
         private float LastClockCheckTime = 0f;
+        private float VideoPlayer_PlayingTime = 0; // isPlaying がtrueになってからの経過時間
 
         [Space(20)]
         [SerializeField]
-        private bool LapisCastVideoPlayerEnabled = false; // LapisCast組み込みプレイヤーを使用するか
-        [SerializeField]
-        private VRCUrl VideoUrl = new VRCUrl(""); // LapisCastStreamClockConnectorが単体で自動再生するURL
-        [SerializeField]
-        private float FirstLoadWait = 2f; // Joinしてからロードするまでの待機時間
-        [SerializeField]
-        private float RetryInterval = 20f; // ロードが失敗した際の待機時間
+        private bool AutoVideoPlayerReload = true; // タイムスタンプのずれを検出した際に自動でReloadリクエストをトリガーするか
         [SerializeField]
         private ushort ReloadTriggerFailCount = 3; // タイムスタンプのずれによって再読み込みする閾値
-
-        private VRCUrl CurrentUrl;
-        private VRCUrl SuspendUrl = new VRCUrl("");
-        private float LastVideoPlayerTryLoadTime = 0f;
 
         // =========================== //
 
@@ -59,32 +52,29 @@ namespace LapisCast{
         {
             LapisCastBehaviourInit();
             LastClockCheckTime = Time.unscaledTime;
-            LastVideoPlayerTryLoadTime = Time.unscaledTime - Mathf.Max(FirstLoadWait, 0);
-
-            // VideoUrl がある場合は最初に Currentに設定
-            // 後から上書き可能
-            if (LapisCastVideoPlayerEnabled && !string.IsNullOrEmpty(VideoUrl.ToString()))
-            {
-                CurrentUrl = VideoUrl;
-            }
         }
 
         void Update()
         {
             // Texture Decoader
-            if (ReadTimestampEnabled && Utilities.IsValid(AVProVideoPlayer) && Utilities.IsValid(VideoScreenRenderer))
+            if (ReadTimestampEnabled && Utilities.IsValid(core))
             {
-                if (AVProVideoPlayer.IsPlaying)
+                if (core.isPlaying)
                 {
-                   var mainTexture = VideoScreenRenderer.material.GetTexture("_MainTex");
+                    VideoPlayer_PlayingTime += Time.unscaledDeltaTime;
+
+                    // 動画プレイヤーがロード直後のタイミングで読み取らない
+                    if (Stream_Unity_DiffTime < 0.0001 && VideoPlayer_PlayingTime < 2)
+                    {
+                        return;
+                    }
+
+                    var mainTexture = core.texture;
                     if (Utilities.IsValid(mainTexture))
                     {
                         if(Time.unscaledTime - LastClockCheckTime > ClockUpdateInterval){
                             LastClockCheckTime = Time.unscaledTime;
-                            if (AVProVideoPlayer.IsPlaying)
-                            {
-                                RequestReadTimeDataTexture(mainTexture);
-                            }
+                            RequestReadTimeDataTexture(mainTexture);
                         }
                     } 
                 }
@@ -94,43 +84,23 @@ namespace LapisCast{
                 }
             }
 
-            // VideoPlayer
-            if (LapisCastVideoPlayerEnabled && !string.IsNullOrEmpty(CurrentUrl.ToString()))
+            // VideoPlayer Reload Request
+            if (AutoVideoPlayerReload && Utilities.IsValid(core))
             {
                 // タイムスタンプにずれが蓄積したときのリロード
-                if (AVProVideoPlayer.IsPlaying) {
+                if (core.isPlaying) {
                     if (StreamTime_Mismatch_Count >= Mathf.Max(ReloadTriggerFailCount, 1))
                     {
-                        VideoPlayerPlay(CurrentUrl);
-                    }
-                }
-                // プレイヤーが停止している状態からの自動リロード
-                else
-                {              
-                    if (Time.unscaledTime - LastVideoPlayerTryLoadTime >= RetryInterval && StreamTime_Mismatch_Count == 0)
-                    {
-                        VideoPlayerPlay(CurrentUrl);
+                        VideoPlayerReload();
                     }
                 }
             }
         }
 
-        public void VideoPlayerPlay(VRCUrl playUrl)
+        private void VideoPlayerReload()
         {
-            if(!LapisCastVideoPlayerEnabled) return;
-
-            VideoPlayerStop();
-            CurrentUrl = playUrl;
-            AVProVideoPlayer.PlayURL(CurrentUrl);
-            LastVideoPlayerTryLoadTime = Time.unscaledTime;
-        }
-
-        public void VideoPlayerStop()
-        {
-            if(!LapisCastVideoPlayerEnabled) return;
-
-            CurrentUrl = SuspendUrl;
-            AVProVideoPlayer.Stop();
+            if(!AutoVideoPlayerReload) return;
+            core.Reload();
             ResetStreamTimeInfo();
         }
 
@@ -138,6 +108,7 @@ namespace LapisCast{
         {
             Stream_Unity_DiffTime = 0;
             StreamTime_Mismatch_Count = 0;
+            VideoPlayer_PlayingTime = 0;
         }
 
         // =========================== //
@@ -242,13 +213,13 @@ namespace LapisCast{
             else
             {      
                 // プレイヤーがActiveになった最初の1度は関係なく適用
-                if (Stream_Unity_DiffTime == 0)
+                if (Stream_Unity_DiffTime < 0.0001)
                 {
                     GetLapisCastCore().AdjustStreamTimelineClock(streamTime, true);
                     Stream_Unity_DiffTime = stream_Unity_DiffTime;
                 }
                 // ゲーム内経過時間と読み出したタイムスタンプが同期していれば適用
-                else if (Math.Abs(Stream_Unity_DiffTime - stream_Unity_DiffTime) < 0.1f * ClockUpdateInterval)
+                else if (Math.Abs(Stream_Unity_DiffTime - stream_Unity_DiffTime) < 0.1f)
                 {
                     GetLapisCastCore().AdjustStreamTimelineClock(streamTime, false);
                     Stream_Unity_DiffTime = stream_Unity_DiffTime;
@@ -263,10 +234,5 @@ namespace LapisCast{
                 }
             }
         }
-
-        // =========================== //
-        
-        public VRCAVProVideoPlayer AttachedAVProVideoPlayer => AVProVideoPlayer;
-        public MeshRenderer AttachedVideoScreenRenderer => VideoScreenRenderer;
     }
 }

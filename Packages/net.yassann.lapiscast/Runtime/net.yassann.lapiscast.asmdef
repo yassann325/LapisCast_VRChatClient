@@ -7,7 +7,8 @@
         "UdonSharp.Runtime",
         "VRC.Udon",
         "VRC.Udon.Serialization.OdinSerializer",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "HoshinoLabs.IwaSync3.Udon"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
