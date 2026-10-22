@@ -77,21 +77,28 @@ namespace LapisCast{
 
         // Adjust SceneStartTime use ServerBased Timestamp
         public void AdjustTimelineClock(double serverTime, double offsetTime){
-            unixOffsetList.Add(new DataToken(serverTime + offsetTime - GetVRChatInstaneActiveTime()));
-            if(unixOffsetList.Count > 10){
-                unixOffsetList.RemoveAt(0);
-            }
-
-            double aveTime = 0;
-            for(int i = 0; i < unixOffsetList.Count; i++){
-                aveTime += unixOffsetList[i].Double;
-            }
-            aveTime /= unixOffsetList.Count;
-
-            targetAdjustSceneStartTime = aveTime;
+            double newTargetAdjustSceneStartTime = serverTime + offsetTime - GetVRChatInstaneActiveTime();
             // If there is a large deviation, it is forced to be applied.
-            if(Math.Abs(targetAdjustSceneStartTime - adjustedSceneStartTime) > 3){
-                adjustedSceneStartTime = targetAdjustSceneStartTime;
+            if (Math.Abs(newTargetAdjustSceneStartTime - adjustedSceneStartTime) > 3)
+            {
+                adjustedSceneStartTime = newTargetAdjustSceneStartTime;
+                unixOffsetList.Clear();
+                unixOffsetList.Add(new DataToken(newTargetAdjustSceneStartTime));
+            }
+            else
+            {
+                unixOffsetList.Add(new DataToken(newTargetAdjustSceneStartTime));
+                if(unixOffsetList.Count > 10){
+                    unixOffsetList.RemoveAt(0);
+                }
+
+                double aveTime = 0;
+                for(int i = 0; i < unixOffsetList.Count; i++){
+                    aveTime += unixOffsetList[i].Double;
+                }
+                aveTime /= unixOffsetList.Count;
+
+                targetAdjustSceneStartTime = aveTime;
             }
         }
 
@@ -131,7 +138,7 @@ namespace LapisCast{
 
             StreamTimeDiffTarget = aveDiffTime;
             // If there is a large deviation, it is forced to be applied.
-            if(Math.Abs(StreamTimeDiffTarget - StreamTimeDiff) > 3){
+            if(Math.Abs(StreamTimeDiffTarget - StreamTimeDiff) > 3 || forceApply){
                 StreamTimeDiff = StreamTimeDiffTarget;
             }
         }

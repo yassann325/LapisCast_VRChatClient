@@ -16,6 +16,7 @@ namespace LapisCast{
 
         // LapisCast Core Vals
         //Client Settings
+        public bool AutoTimeAjustFirst = true;
         public float StartWaiting = 0f;
         public float LoadingInterval = 5f;
         public float MaxEventDelay = 1f;
@@ -74,9 +75,10 @@ namespace LapisCast{
                 RequestSerialization();
             }
 
-            // If Empty Instance URL Access for time correction
-            if(InstanceURL.ToString().Length == 0){
+            // If AutoTimeAjustFirst Access for time correction
+            if(AutoTimeAjustFirst){
                 VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
+                download_timer = Mathf.Min(download_timer, -5f);
             }
         }
 
@@ -126,8 +128,13 @@ namespace LapisCast{
         //Get Instance Data
         private void LapisCastTimelineDownload(){
             if(!(EnableLapisCastEventExec && EnableLapisCast)) return;
-            if (InstanceURL.ToString().Length == 0){ return; }
-            VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
+            if (InstanceURL.ToString().Length == 0){ 
+                VRCStringDownloader.LoadUrl(timeAdjustmentUrl, (IUdonEventReceiver)this);
+            }
+            else
+            {
+                VRCStringDownloader.LoadUrl(InstanceURL, (IUdonEventReceiver)this);
+            }
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload downloadresult)
