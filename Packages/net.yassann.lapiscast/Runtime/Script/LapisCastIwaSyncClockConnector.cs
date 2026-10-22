@@ -15,12 +15,12 @@ using HoshinoLabs.IwaSync3.Udon;
 
 namespace LapisCast{
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class LapisCastStreamClockConnector : LapisCastBehaviour
+    public class LapisCastIwaSyncClockConnector : LapisCastBehaviour
     {
         [SerializeField]
         private bool ReadTimestampEnabled = true;
         [SerializeField]
-        VideoCore core; // IwaSync プレイヤー
+        VideoCore IwaSyncVideoCore; // IwaSync プレイヤー
 
         [Space(20)]
         [SerializeField]
@@ -57,9 +57,9 @@ namespace LapisCast{
         void Update()
         {
             // Texture Decoader
-            if (ReadTimestampEnabled && Utilities.IsValid(core))
+            if (ReadTimestampEnabled && Utilities.IsValid(IwaSyncVideoCore))
             {
-                if (core.isPlaying)
+                if (IwaSyncVideoCore.isPlaying)
                 {
                     VideoPlayer_PlayingTime += Time.unscaledDeltaTime;
 
@@ -69,7 +69,7 @@ namespace LapisCast{
                         return;
                     }
 
-                    var mainTexture = core.texture;
+                    var mainTexture = IwaSyncVideoCore.texture;
                     if (Utilities.IsValid(mainTexture))
                     {
                         if(Time.unscaledTime - LastClockCheckTime > ClockUpdateInterval){
@@ -85,10 +85,10 @@ namespace LapisCast{
             }
 
             // VideoPlayer Reload Request
-            if (AutoVideoPlayerReload && Utilities.IsValid(core))
+            if (AutoVideoPlayerReload && Utilities.IsValid(IwaSyncVideoCore))
             {
                 // タイムスタンプにずれが蓄積したときのリロード
-                if (core.isPlaying) {
+                if (IwaSyncVideoCore.isPlaying) {
                     if (StreamTime_Mismatch_Count >= Mathf.Max(ReloadTriggerFailCount, 1))
                     {
                         VideoPlayerReload();
@@ -100,7 +100,7 @@ namespace LapisCast{
         private void VideoPlayerReload()
         {
             if(!AutoVideoPlayerReload) return;
-            core.Reload();
+            IwaSyncVideoCore.Reload();
             ResetStreamTimeInfo();
         }
 
