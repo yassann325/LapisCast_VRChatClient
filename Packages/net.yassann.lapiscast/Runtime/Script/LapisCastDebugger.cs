@@ -11,9 +11,9 @@ using UnityEngine.UI;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class LapisCastDebugger : LapisCastBehaviour
 {
-    public bool sendDebugEvent = false;
+    public bool AutoSendDebugEvent = false;
     [SerializeField]
-    private Toggle debugModeToggle;
+    private Toggle AutoSendModeToggle;
 
     [Space(20)]
     [SerializeField]
@@ -52,7 +52,7 @@ public class LapisCastDebugger : LapisCastBehaviour
     }
 
     private void Update() {
-        if(sendDebugEvent && timer > eventSendIntervalTime){
+        if(AutoSendDebugEvent && timer > eventSendIntervalTime){
             timer = 0;
             SendTestEvent();
         }
@@ -61,7 +61,7 @@ public class LapisCastDebugger : LapisCastBehaviour
 
     public void OnDebugParamChanged()
     {
-        debugModeToggle.isOn = sendDebugEvent;
+        AutoSendModeToggle.isOn = AutoSendDebugEvent;
 
         EventNameText.text = EventName;
         ValueText.text = Value;
@@ -72,7 +72,7 @@ public class LapisCastDebugger : LapisCastBehaviour
 
     // Set SendDebugEvent State
     public void ToggleSendDebugEvent(){
-        SetSendDebugEventState(!sendDebugEvent);
+        SetSendDebugEventState(!AutoSendDebugEvent);
     }
     public void EnableSendDebugEvent(){
         SetSendDebugEventState(true);
@@ -81,7 +81,7 @@ public class LapisCastDebugger : LapisCastBehaviour
         SetSendDebugEventState(false);
     }
     public void SetSendDebugEventState(bool state){
-        sendDebugEvent = state;
+        AutoSendDebugEvent = state;
         OnDebugParamChanged();
     }
 
