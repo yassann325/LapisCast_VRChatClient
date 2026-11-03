@@ -45,13 +45,17 @@ public class LapisCastConsole : LapisCastBehaviour
     [SerializeField]
     private Toggle settingPanelCheck;
 
-    [Header("Debug Menu Things")]
+    [Header("Setting Menu Things")]
     [SerializeField]
     private Toggle LapisCastEventExecToggle;
     [SerializeField]
     private Toggle LapisCastEventOutputToggle;
     [SerializeField]
     private Toggle LapisCastUseStreamClockToggle;
+
+    [Header("Debug Menu Things")]
+    [SerializeField]
+    private Toggle GimmickDebugModeToggle;
 
 
     void Start()
@@ -66,13 +70,15 @@ public class LapisCastConsole : LapisCastBehaviour
         urlInputField.SetUrl(LapisCast.GetInstanceUrl());
         LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
         LapisCastEventOutputToggle.isOn = LapisCast.EnableLapisCastEventOutput;
+        GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
     }
 
     private void Update()
     {
         UrlText.text = LapisCast.GetInstanceUrl().ToString();
-        lapisCastEnableCheck.isOn = LapisCast.GetLapisCastEnable();
+        lapisCastEnableCheck.isOn = LapisCast.EnableLapisCast;
         LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
+        GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
     }
 
 
@@ -161,7 +167,7 @@ public class LapisCastConsole : LapisCastBehaviour
 
     public void ToggleLapisCastEnable()
     {
-        LapisCast.SetLapisCastEnable(!LapisCast.GetLapisCastEnable());
+        LapisCast.SetLapisCastEnable(!LapisCast.EnableLapisCast);
     }
 
     public void ToggleLapisCastUseStreamClock()
@@ -177,5 +183,10 @@ public class LapisCastConsole : LapisCastBehaviour
     public void ToggleLapisCastEventOutput()
     {
         LapisCast.EnableLapisCastEventOutput = LapisCastEventOutputToggle.isOn;
+    }
+
+    public void ToggleGimmickDebugMode()
+    {
+        LapisCast.SetGimmickDebugModeState(!LapisCast.GimmickDebugMode);
     }
 }

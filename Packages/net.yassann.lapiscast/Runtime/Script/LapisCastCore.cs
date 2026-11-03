@@ -27,6 +27,8 @@ namespace LapisCast{
         public bool EnableLapisCastEventExec = true;
         public bool EnableLapisCastEventOutput = true;
         public bool DisableLogOnNonWindows = true;
+        [SerializeField, UdonSynced]
+        public bool GimmickDebugMode = false;
 
         //Client Values
         [UdonSynced, FieldChangeCallback(nameof(EventSpace))] private string eventSpace = "VRChat@defaultinstance";
@@ -309,8 +311,13 @@ namespace LapisCast{
             EnableLapisCast = state;
             RequestSerialization();
         }
-        public bool GetLapisCastEnable() { return EnableLapisCast; }
 
+        public void SetGimmickDebugModeState(bool state)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            GimmickDebugMode = state;
+            RequestSerialization();
+        }
     }
 }
 
