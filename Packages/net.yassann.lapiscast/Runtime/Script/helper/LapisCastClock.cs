@@ -15,9 +15,16 @@ namespace LapisCast{
         // =================================================== //
         // LapisCast Clock Vals
         [Tooltip("LapisCast単独使用の際のオフセットです。")]
+        [UdonSynced]
         public float StandaloneTimelineOffset = -7f;
+        [SerializeField]
+        private float _DefaultStandaloneTimelineOffset = 0f;
+
         [Tooltip("配信の時間情報を使用する際のオフセットです。")]
-        public float StreamTimelineOffset = -0.5f;
+        [UdonSynced]
+        public float StreamTimelineOffset = 0f;
+        [SerializeField]
+        private float _DefaultStreamTimelineOffset = 0f;
         [SerializeField, UdonSynced]
         private bool UseStreamTimestamp = false;
 
@@ -171,6 +178,29 @@ namespace LapisCast{
         // 現在どちらのタイムソースを使用しているかを取得
         public bool GetUseStreamTimestamp() { return UseStreamTimestamp; }
 
+        public void SetStandaloneTimelineOffset(float offsetTime)
+        {
+            if (!Networking.IsOwner(gameObject))
+            {
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            }
+            StandaloneTimelineOffset = offsetTime;
+            RequestSerialization();
+        }
+
+        public void SetStreamTimelineOffset(float offsetTime)
+        {
+            if (!Networking.IsOwner(gameObject))
+            {
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            }
+            StreamTimelineOffset = offsetTime;
+            RequestSerialization();
+        }
+
+        // デフォルトで設定されていたオフセットタイムを取得
+        public float DefaultStandaloneTimelineOffset => _DefaultStandaloneTimelineOffset;
+        public float DefaultStreamTimelineOffset => _DefaultStreamTimelineOffset;
     }
 }
 

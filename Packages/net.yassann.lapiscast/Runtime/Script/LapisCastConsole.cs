@@ -56,6 +56,14 @@ public class LapisCastConsole : LapisCastBehaviour
     [Header("Debug Menu Things")]
     [SerializeField]
     private Toggle GimmickDebugModeToggle;
+    [SerializeField]
+    private TMP_Text StandaloneTimeOffsetSecText;
+    [SerializeField]
+    private TMP_Text StreamTimeOffsetSecText;
+    [SerializeField]
+    private Slider StandaloneTimeOffsetSlider;
+    [SerializeField]
+    private Slider StreamTimeOffsetSlider;
 
 
     void Start()
@@ -71,6 +79,9 @@ public class LapisCastConsole : LapisCastBehaviour
         LapisCastEventExecToggle.isOn = LapisCast.EnableLapisCastEventExec;
         LapisCastEventOutputToggle.isOn = LapisCast.EnableLapisCastEventOutput;
         GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
+
+        StandaloneTimeOffsetSlider.value = LapisCast.StandaloneTimelineOffset;
+        StreamTimeOffsetSlider.value = LapisCast.StreamTimelineOffset;
     }
 
     private void Update()
@@ -79,6 +90,12 @@ public class LapisCastConsole : LapisCastBehaviour
         lapisCastEnableCheck.isOn = LapisCast.EnableLapisCast;
         LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
         GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
+
+        StandaloneTimeOffsetSecText.text = LapisCast.StandaloneTimelineOffset.ToString("F1");
+        StreamTimeOffsetSecText.text = LapisCast.StreamTimelineOffset.ToString("F1");
+
+        StandaloneTimeOffsetSlider.SetValueWithoutNotify(LapisCast.StandaloneTimelineOffset);
+        StreamTimeOffsetSlider.SetValueWithoutNotify(LapisCast.StreamTimelineOffset);
     }
 
 
@@ -165,6 +182,7 @@ public class LapisCastConsole : LapisCastBehaviour
         SetPanelActive(_currentPanel);
     }
 
+    // Param Update
     public void ToggleLapisCastEnable()
     {
         LapisCast.SetLapisCastEnable(!LapisCast.EnableLapisCast);
@@ -188,5 +206,22 @@ public class LapisCastConsole : LapisCastBehaviour
     public void ToggleGimmickDebugMode()
     {
         LapisCast.SetGimmickDebugModeState(!LapisCast.GimmickDebugMode);
+    }
+
+    // TimeOffset Setting
+    public void UpdateStandaloneTimelineOffset()
+    {
+        LapisCast.SetStandaloneTimelineOffset(StandaloneTimeOffsetSlider.value);
+    }
+
+    public void UpdateStreamTimelineOffset()
+    {
+        LapisCast.SetStreamTimelineOffset(StreamTimeOffsetSlider.value);
+    }
+
+    public void ResetTimeOffset()
+    {
+        StandaloneTimeOffsetSlider.value = LapisCast.DefaultStandaloneTimelineOffset;
+        StreamTimeOffsetSlider.value = LapisCast.DefaultStreamTimelineOffset;
     }
 }
