@@ -5,28 +5,46 @@ using VRC.SDKBase;
 using VRC.Udon;
 using LapisCast;
 using TMPro;
+using UnityEngine.UI;
 
 public class LapisCastTimeClockDebug : LapisCastBehaviour
 {
     [SerializeField]
     private TMP_Text text;
+    [SerializeField]
+    private Text uitext;
+
+    private LapisCastCore lapisCastCore;
 
     void Start()
     {
         LapisCastBehaviourInit();
+        lapisCastCore = GetLapisCastCore();
     }
 
     void Update()
     {
-        if(!text){ return; }
 
         string [] debugTexts = {
-        /* LapisCast Time */    GetLapisCastCore().GetTimestamp().ToString("F1"),
-        /* LocalHostTime */     GetLapisCastCore().GetLocalHostUnixTime().ToString("F1"),
-        /* UnixTime */          GetLapisCastCore().GetUnixTimestamp().ToString("F1"),
-        /* StreamTime */        GetLapisCastCore().GetStreamTimestamp().ToString("F1"),
-        /* Unix - Stream */     (GetLapisCastCore().GetUnixTimestamp() - GetLapisCastCore().GetStreamTimestamp()).ToString("F3")
+        /* LapisCast Time */    lapisCastCore.GetTimestamp().ToString("F1"),
+        /* LocalHostTime */     lapisCastCore.GetLocalHostUnixTime().ToString("F1"),
+        /* UnixTime */          lapisCastCore.GetUnixTimestamp().ToString("F1"),
+        /* StreamTime */        lapisCastCore.GetStreamTimestamp().ToString("F1"),
+        /* Unix - Stream */     (lapisCastCore.GetUnixTimestamp() - lapisCastCore.GetStreamTimestamp()).ToString("F3")
         };
-        text.text = string.Join("\n", debugTexts);       
+        
+        ApplyTimeText(string.Join("\n", debugTexts));     
+    }
+
+    private void ApplyTimeText(string timetext)
+    {
+        if (Utilities.IsValid(uitext))
+        {
+            uitext.text = timetext;
+        }
+        if (Utilities.IsValid(text))
+        {
+            text.text = timetext;
+        }
     }
 }
