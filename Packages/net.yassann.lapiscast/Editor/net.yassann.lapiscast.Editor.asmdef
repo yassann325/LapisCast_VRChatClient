@@ -1,12 +1,17 @@
 {
-    "name": "net.yassann.lapiscast.Editor",
+    "name": "net.yassann.lapiscast.editor",
+    "rootNamespace": "",
     "references": [
         "VRC.SDK3",
         "VRC.SDK3.Editor",
         "VRC.SDKBase",
-        "VRC.SDKBase.Editor"
+        "VRC.SDKBase.Editor",
+        "UdonSharp.Runtime",
+        "net.yassann.lapiscast"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

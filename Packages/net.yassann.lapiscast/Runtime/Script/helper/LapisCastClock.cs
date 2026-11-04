@@ -14,13 +14,11 @@ namespace LapisCast{
 
         // =================================================== //
         // LapisCast Clock Vals
-        [Tooltip("LapisCast単独使用の際のオフセットです。")]
         [UdonSynced]
         public float StandaloneTimelineOffset = -7f;
         [SerializeField]
         private float _DefaultStandaloneTimelineOffset = 0f;
 
-        [Tooltip("配信の時間情報を使用する際のオフセットです。")]
         [UdonSynced]
         public float StreamTimelineOffset = 0f;
         [SerializeField]

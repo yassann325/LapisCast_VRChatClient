@@ -22,12 +22,12 @@ namespace LapisCast{
         public float MaxEventDelay = 1f;
         [SerializeField, UdonSynced]
         private VRCUrl InstanceURL = new VRCUrl("https://lapis.yassann.net/lapiscast/public/{instanceid-here}");
-        [SerializeField, UdonSynced]
+        [UdonSynced]
         public bool EnableLapisCast = true;
         public bool EnableLapisCastEventExec = true;
         public bool EnableLapisCastEventOutput = true;
         public bool DisableLogOnNonWindows = true;
-        [SerializeField, UdonSynced]
+        [UdonSynced]
         public bool GimmickDebugMode = false;
 
         //Client Values
