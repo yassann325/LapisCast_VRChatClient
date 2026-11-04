@@ -56,18 +56,21 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 746068031235253716}
   StandaloneTimelineOffset: -10
-  StreamTimelineOffset: -0.5
+  _DefaultStandaloneTimelineOffset: -10
+  StreamTimelineOffset: 0
+  _DefaultStreamTimelineOffset: 0
   UseStreamTimestamp: 0
+  AutoTimeAjustFirst: 1
   StartWaiting: 0
   LoadingInterval: 5
   MaxEventDelay: 1
-  LocalTestMode: 0
   InstanceURL:
     url: https://lapis.yassann.net/lapiscast/public/{instanceid-here}
   EnableLapisCast: 1
   EnableLapisCastEventExec: 1
   EnableLapisCastEventOutput: 1
   DisableLogOnNonWindows: 1
+  GimmickDebugMode: 0
 --- !u!114 &746068031235253716
 MonoBehaviour:
   m_ObjectHideFlags: 0
