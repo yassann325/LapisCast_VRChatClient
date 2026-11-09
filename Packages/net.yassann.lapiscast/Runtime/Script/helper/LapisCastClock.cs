@@ -26,6 +26,9 @@ namespace LapisCast{
         [SerializeField, UdonSynced]
         private bool UseStreamTimestamp = false;
 
+        [SerializeField]
+        private bool forceFallbackStandaloneTime = true;
+
         // Adjust Target Timestamp
         private double targetAdjustSceneStartTime = 0;
         private double StreamTimeDiffTarget = 0;
@@ -157,11 +160,11 @@ namespace LapisCast{
         //======================================================//
         // LapisCastで使用するタイムスタンプを取得
         public double GetTimestamp(){
-            if(UseStreamTimestamp){
-                return GetStreamTimestamp() + StreamTimelineOffset;
+            if(!UseStreamTimestamp || forceFallbackStandaloneTime){
+                return GetUnixTimestamp() + StandaloneTimelineOffset;
             }
             else{
-                return GetUnixTimestamp() + StandaloneTimelineOffset;
+                return GetStreamTimestamp() + StreamTimelineOffset;
             }
         }
 
@@ -176,6 +179,7 @@ namespace LapisCast{
         // 現在どちらのタイムソースを使用しているかを取得
         public bool GetUseStreamTimestamp() { return UseStreamTimestamp; }
 
+        // 時間軸のオフセット設定
         public void SetStandaloneTimelineOffset(float offsetTime)
         {
             if (!Networking.IsOwner(gameObject))
@@ -199,6 +203,15 @@ namespace LapisCast{
         // デフォルトで設定されていたオフセットタイムを取得
         public float DefaultStandaloneTimelineOffset => _DefaultStandaloneTimelineOffset;
         public float DefaultStreamTimelineOffset => _DefaultStreamTimelineOffset;
+
+        // ForceFallbackStandaloneTime 設定
+        public void SetForceFallbackStandaloneTime(bool state)
+        {
+            forceFallbackStandaloneTime = state;
+        }
+
+        // forceFallbackStandaloneTimeの状態を取得
+        public bool ForceFallbackStandaloneTime => forceFallbackStandaloneTime;
     }
 }
 

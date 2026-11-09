@@ -14,6 +14,7 @@ namespace LapisCastEditor{
         private SerializedProperty StreamTimelineOffset;
         private SerializedProperty DefaultStreamTimelineOffset;
         private SerializedProperty UseStreamTimestamp;
+        private SerializedProperty ForceFallbackStandaloneTime;
 
         private void OnEnable()
         {
@@ -24,6 +25,7 @@ namespace LapisCastEditor{
             StreamTimelineOffset = serializedObject.FindProperty("StreamTimelineOffset");
             DefaultStreamTimelineOffset = serializedObject.FindProperty("_DefaultStreamTimelineOffset");
             UseStreamTimestamp = serializedObject.FindProperty("UseStreamTimestamp");
+            ForceFallbackStandaloneTime = serializedObject.FindProperty("forceFallbackStandaloneTime");
         }
 
         public override void OnInspectorGUI()
@@ -58,6 +60,7 @@ namespace LapisCastEditor{
             EditorGUILayout.PropertyField(StandaloneTimelineOffset, new GUIContent("StandaloneTimelineOffset", "LapisCast単独使用の際のタイムソースオフセットです。"));
             EditorGUILayout.PropertyField(StreamTimelineOffset, new GUIContent("StreamTimelineOffset", "配信のタイムソースを使用する際のオフセットです。"));
             EditorGUILayout.PropertyField(UseStreamTimestamp, new GUIContent("UseStreamTimestamp", "デフォルトで動画配信内のタイムソースを使用するか"));
+            EditorGUILayout.PropertyField(ForceFallbackStandaloneTime, new GUIContent("ForceFallbackStandaloneTime", "StreamTimelineの時間軸を強制的にUnixTimeに固定します"));
 
             lapiscastcore.GimmickDebugMode = false;
             DefaultStandaloneTimelineOffset.floatValue = StandaloneTimelineOffset.floatValue;
