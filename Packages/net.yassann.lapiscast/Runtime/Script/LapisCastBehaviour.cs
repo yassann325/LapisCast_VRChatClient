@@ -63,6 +63,9 @@ namespace LapisCast{
         public void SendLapisCast(string spanename, string keyname, DataToken value){
             _lapisCastCore.AddEvent(spanename, keyname, value);
         }
+        public void SendLapisCast(double timestamp, string spanename, string keyname, DataToken value){
+            _lapisCastCore.AddEvent(timestamp, spanename, keyname, value);
+        }
 
 
         // Exec Event Self

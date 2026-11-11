@@ -235,6 +235,10 @@ namespace LapisCast{
 
         //Upload Instance Data
         public void AddEvent(string spacename, string keyname, DataToken value){
+            AddEvent(GetUnixTimestamp(), spacename, keyname, value);
+        }
+
+        public void AddEvent(double timestamp, string spacename, string keyname, DataToken value){
             if(!(EnableLapisCastEventOutput && EnableLapisCast)) return;
 
             #if !(UNITY_EDITOR || UNITY_STANDALONE_WIN)
@@ -246,21 +250,21 @@ namespace LapisCast{
             messageFrameDict.SetValue("eventkey", keyname);
             messageFrameDict.SetValue("value", value);
 
-            string timestamp = GetUnixTimestamp().ToString();
+            string timestamp_string = timestamp.ToString();
             
             //Add eventmessage to uploadDataDict
-            if(uploadDataDict.TryGetValue(timestamp, out DataToken timelineColumn)){
+            if(uploadDataDict.TryGetValue(timestamp_string, out DataToken timelineColumn)){
                 if(timelineColumn.TokenType != TokenType.DataList){
                     //if Invalid Delete it
-                    uploadDataDict.Remove(timestamp);
+                    uploadDataDict.Remove(timestamp_string);
                 }
                 else{
                     timelineColumn.DataList.Add(messageFrameDict.DeepClone());
                 }
             }
             else{
-                uploadDataDict.SetValue(timestamp, new DataList());
-                ((DataList)uploadDataDict[timestamp]).Add(messageFrameDict.DeepClone());
+                uploadDataDict.SetValue(timestamp_string, new DataList());
+                ((DataList)uploadDataDict[timestamp_string]).Add(messageFrameDict.DeepClone());
             }
         }
 
