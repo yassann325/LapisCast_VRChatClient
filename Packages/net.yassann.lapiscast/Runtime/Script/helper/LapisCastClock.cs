@@ -26,7 +26,7 @@ namespace LapisCast{
         [SerializeField, UdonSynced]
         private bool useStreamTimestamp = false;
 
-        [SerializeField]
+        [SerializeField, UdonSynced]
         private bool forceFallbackStandaloneTime = true;
 
         // Adjust Target Timestamp
@@ -207,10 +207,15 @@ namespace LapisCast{
         public float DefaultStandaloneTimelineOffset => _DefaultStandaloneTimelineOffset;
         public float DefaultStreamTimelineOffset => _DefaultStreamTimelineOffset;
 
-        // ForceFallbackStandaloneTime 設定
+        // forceFallbackStandaloneTimeを設定
         public void SetForceFallbackStandaloneTime(bool state)
         {
+            if (!Networking.IsOwner(gameObject))
+            {
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            }
             forceFallbackStandaloneTime = state;
+            RequestSerialization();
         }
 
         // forceFallbackStandaloneTimeの状態を取得
