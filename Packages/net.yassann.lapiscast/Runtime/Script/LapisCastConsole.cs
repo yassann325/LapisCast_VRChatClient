@@ -88,7 +88,7 @@ public class LapisCastConsole : LapisCastBehaviour
     {
         UrlText.text = LapisCast.GetInstanceUrl().ToString();
         lapisCastEnableCheck.isOn = LapisCast.EnableLapisCast;
-        LapisCastUseStreamClockToggle.isOn = LapisCast.GetUseStreamTimestamp();
+        LapisCastUseStreamClockToggle.isOn = LapisCast.UseStreamTimestamp;
         GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
 
         StandaloneTimeOffsetSecText.text = LapisCast.StandaloneTimelineOffset.ToString("F1");
@@ -190,7 +190,7 @@ public class LapisCastConsole : LapisCastBehaviour
 
     public void ToggleLapisCastUseStreamClock()
     {
-        LapisCast.SetUseStreamTimestamp(!LapisCast.GetUseStreamTimestamp());
+        LapisCast.SetUseStreamTimestamp(!LapisCast.UseStreamTimestamp);
     }
 
     public void ToggleLapisCastEventExec()

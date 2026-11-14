@@ -24,7 +24,7 @@ namespace LapisCast{
         [SerializeField]
         private float _DefaultStreamTimelineOffset = 0f;
         [SerializeField, UdonSynced]
-        private bool UseStreamTimestamp = false;
+        private bool useStreamTimestamp = false;
 
         [SerializeField]
         private bool forceFallbackStandaloneTime = true;
@@ -173,11 +173,14 @@ namespace LapisCast{
         public void SetUseStreamTimestamp(bool state)
         {
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            UseStreamTimestamp = state;
+            useStreamTimestamp = state;
             RequestSerialization();
         }
+        // 現在のUseStreamTimestamp状態を公開
+        public bool UseStreamTimestamp => useStreamTimestamp;
+
         // 現在どちらのタイムソースを使用しているかを取得
-        public bool GetUseStreamTimestamp() { return UseStreamTimestamp && !forceFallbackStandaloneTime; }
+        public bool GetUseStreamTimestamp() { return useStreamTimestamp && !forceFallbackStandaloneTime; }
 
         // 時間軸のオフセット設定
         public void SetStandaloneTimelineOffset(float offsetTime)

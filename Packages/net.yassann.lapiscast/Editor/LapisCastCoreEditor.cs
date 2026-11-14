@@ -42,7 +42,7 @@ namespace LapisCastEditor{
             DefaultStandaloneTimelineOffset = serializedObject.FindProperty("_DefaultStandaloneTimelineOffset");
             StreamTimelineOffset = serializedObject.FindProperty("StreamTimelineOffset");
             DefaultStreamTimelineOffset = serializedObject.FindProperty("_DefaultStreamTimelineOffset");
-            UseStreamTimestamp = serializedObject.FindProperty("UseStreamTimestamp");
+            UseStreamTimestamp = serializedObject.FindProperty("useStreamTimestamp");
             ForceFallbackStandaloneTime = serializedObject.FindProperty("forceFallbackStandaloneTime");
         }
 
