@@ -55,6 +55,8 @@ public class LapisCastConsole : LapisCastBehaviour
 
     [Header("Debug Menu Things")]
     [SerializeField]
+    private TMP_Text CurrentTimeSourceText;
+    [SerializeField]
     private Toggle GimmickDebugModeToggle;
     [SerializeField]
     private TMP_Text StandaloneTimeOffsetSecText;
@@ -91,6 +93,7 @@ public class LapisCastConsole : LapisCastBehaviour
         LapisCastUseStreamClockToggle.isOn = LapisCast.UseStreamTimestamp;
         GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
 
+        CurrentTimeSourceText.text = LapisCast.GetUseStreamTimestamp() ? "StreamTime" : "StandaloneTime";
         StandaloneTimeOffsetSecText.text = LapisCast.StandaloneTimelineOffset.ToString("F1");
         StreamTimeOffsetSecText.text = LapisCast.StreamTimelineOffset.ToString("F1");
 
