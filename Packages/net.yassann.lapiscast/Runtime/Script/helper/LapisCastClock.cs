@@ -160,11 +160,11 @@ namespace LapisCast{
         //======================================================//
         // LapisCastで使用するタイムスタンプを取得
         public double GetTimestamp(){
-            if(!UseStreamTimestamp || forceFallbackStandaloneTime){
-                return GetUnixTimestamp() + StandaloneTimelineOffset;
+            if(GetUseStreamTimestamp()){
+                return GetStreamTimestamp() + StreamTimelineOffset;
             }
             else{
-                return GetStreamTimestamp() + StreamTimelineOffset;
+                return GetUnixTimestamp() + StandaloneTimelineOffset;
             }
         }
 
@@ -177,7 +177,7 @@ namespace LapisCast{
             RequestSerialization();
         }
         // 現在どちらのタイムソースを使用しているかを取得
-        public bool GetUseStreamTimestamp() { return UseStreamTimestamp; }
+        public bool GetUseStreamTimestamp() { return UseStreamTimestamp && !forceFallbackStandaloneTime; }
 
         // 時間軸のオフセット設定
         public void SetStandaloneTimelineOffset(float offsetTime)
