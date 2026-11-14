@@ -52,6 +52,8 @@ public class LapisCastConsole : LapisCastBehaviour
     private Toggle LapisCastEventOutputToggle;
     [SerializeField]
     private Toggle LapisCastUseStreamClockToggle;
+    [SerializeField]
+    private Toggle LapisCastLapisCastForceFallbackStandaloneTimeToggle;
 
     [Header("Debug Menu Things")]
     [SerializeField]
@@ -91,6 +93,7 @@ public class LapisCastConsole : LapisCastBehaviour
         UrlText.text = LapisCast.GetInstanceUrl().ToString();
         lapisCastEnableCheck.isOn = LapisCast.EnableLapisCast;
         LapisCastUseStreamClockToggle.isOn = LapisCast.UseStreamTimestamp;
+        LapisCastLapisCastForceFallbackStandaloneTimeToggle.isOn = LapisCast.ForceFallbackStandaloneTime;
         GimmickDebugModeToggle.isOn = LapisCast.GimmickDebugMode;
 
         CurrentTimeSourceText.text = LapisCast.GetUseStreamTimestamp() ? "StreamTime" : "StandaloneTime";
@@ -194,6 +197,11 @@ public class LapisCastConsole : LapisCastBehaviour
     public void ToggleLapisCastUseStreamClock()
     {
         LapisCast.SetUseStreamTimestamp(!LapisCast.UseStreamTimestamp);
+    }
+
+    public void ToggleLapisCastForceFallbackStandaloneTime()
+    {
+        LapisCast.SetForceFallbackStandaloneTime(!LapisCast.ForceFallbackStandaloneTime);
     }
 
     public void ToggleLapisCastEventExec()
